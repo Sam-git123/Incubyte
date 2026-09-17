@@ -1,6 +1,6 @@
 # Proposed Architecture
 
-> Status: Phase 0 proposal. No application workspace, framework, database schema, or runtime code has been initialized.
+> Status: Phase 1 workspace bootstrap implemented. The React and Fastify entry points exist, but no product features, database schema, or persistence code have been implemented.
 
 ## Overview
 

@@ -1,0 +1,34 @@
+{
+  "name": "acme-salary-management",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.15.1",
+  "engines": {
+    "node": ">=20.19.0",
+    "pnpm": ">=10.0.0"
+  },
+  "scripts": {
+    "build": "corepack pnpm --recursive --if-present run build",
+    "dev": "concurrently --kill-others-on-fail --names api,web --prefix-colors blue,magenta \"corepack pnpm --filter @acme/api dev\" \"corepack pnpm --filter @acme/web dev\"",
+    "format": "prettier --write .",
+    "lint": "eslint . && prettier --check .",
+    "test": "corepack pnpm --recursive --if-present run test",
+    "typecheck": "corepack pnpm --recursive --if-present run typecheck"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.20.3",
+    "concurrently": "^10.0.5",
+    "eslint": "^10.10.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.12.0",
+    "prettier": "^3.9.7",
+    "tsx": "^4.23.13",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.70.0",
+    "vitest": "^5.0.1"
+  }
+}

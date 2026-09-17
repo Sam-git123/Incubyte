@@ -36,3 +36,30 @@ Rejected or deferred: application scaffolding, executable schemas, feature imple
 - Reviewed the created Markdown documents and repository diff for scope and internal consistency.
 - Confirmed no React, Node, pnpm, Prisma, application code, or Git commit was introduced.
 - No automated tests were applicable to this documentation-only phase.
+
+## 2026-09-17 — Phase 1 workspace bootstrap
+
+### Task
+
+Create a strict TypeScript pnpm workspace with minimal Fastify, React/Vite, and shared-contracts packages, plus workspace-level linting, formatting, testing, and build commands. Product features and persistence were explicitly excluded.
+
+### AI prompt / request
+
+The developer asked the AI agent to complete Phase 1 only, preserve the Phase 0 artifacts and Git history, keep dependencies at appropriate workspace levels, add only API-health and React-heading smoke tests, run all quality gates, and avoid committing or pushing.
+
+### AI contribution
+
+The AI agent created the workspace manifests and TypeScript configurations, shared ESLint and Prettier configuration, a factory-based Fastify application with `GET /health`, a minimal React entry point, an empty compilable contracts package, and two focused bootstrap tests. It installed compatible dependency versions and generated the pnpm lockfile.
+
+### Engineering review
+
+Shared development tools were kept at the workspace root, while Fastify and React/Vite dependencies were scoped to their owning applications. Strict TypeScript settings are inherited from one base configuration, with environment-specific module and library settings in each package. The API separates application construction from process startup so it can be tested with `app.inject()` without opening a network port.
+
+No employee, salary, analytics, database, UI-library, or deployment concerns were introduced. The existing architecture status note was updated only to reflect that the workspace bootstrap now exists.
+
+### Verification
+
+- `pnpm lint`: passed ESLint and Prettier checks.
+- `pnpm typecheck`: passed for API, web, and contracts packages.
+- `pnpm test`: passed two tests across two test files.
+- `pnpm build`: produced successful API, web, and contracts builds.

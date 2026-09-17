@@ -85,3 +85,25 @@ The refactor review removed a duplicate test-only input type; no further abstrac
 - RED: the focused salary suite failed because the production module did not exist.
 - GREEN: the focused suite passed all eight generated cases after implementation and refactoring.
 - The full test suite, strict TypeScript check, and lint/format checks passed.
+
+## 2026-09-17 — Phase 3 persistence foundation
+
+### Task
+
+Add the minimum Prisma and SQLite persistence model for employees and salary history, a real migration, a centralized client boundary, and isolated repository integration tests without starting API features.
+
+### AI contribution
+
+The AI agent proposed the schema and indexes, generated and reviewed the initial migration SQL, added the Prisma client and repository boundaries, and wrote integration tests for creation, uniqueness, ordered salary history, integer retention, foreign keys, and cascading deletion.
+
+### Engineering review
+
+Required scalar employee attributes were accepted instead of premature reference tables. Salary records are append-style, allow future effective dates, and cascade on employee deletion. The repository accepts the Phase 2 `Salary` value so it does not duplicate domain validation. Prisma 6.19 with the libSQL adapter was selected after current Prisma 7 migration tooling failed with a documented schema-engine regression; `RUST_LOG=info` is applied to migration scripts as the documented workaround for the corresponding SQLite CLI issue.
+
+The design deliberately excludes service logic, current-salary selection, seed data, pagination, HTTP routes, and generic repository abstractions.
+
+### Verification
+
+- Repository tests start from an ignored test database rebuilt from committed migrations and clear records between cases.
+- Prisma Client generation and a clean migration apply succeeded.
+- The focused persistence suite and the complete workspace quality gates passed.

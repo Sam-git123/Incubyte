@@ -4,14 +4,23 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc --project tsconfig.build.json",
+    "build": "node --eval \"require('node:fs').rmSync('dist', { recursive: true, force: true })\" && tsc --project tsconfig.build.json",
+    "db:generate": "prisma generate --schema prisma/schema.prisma",
+    "db:migrate": "cross-env RUST_LOG=info prisma migrate dev --schema prisma/schema.prisma",
+    "db:migrate:deploy": "cross-env RUST_LOG=info prisma migrate deploy --schema prisma/schema.prisma",
+    "db:reset": "cross-env RUST_LOG=info prisma migrate reset --schema prisma/schema.prisma --force",
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.js",
     "test": "vitest run",
     "typecheck": "tsc --project tsconfig.json"
   },
   "dependencies": {
+    "@prisma/adapter-libsql": "6.19.0",
+    "@prisma/client": "6.19.0",
+    "dotenv": "^17.4.2",
     "fastify": "^5.12.5"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "prisma": "6.19.0"
+  }
 }

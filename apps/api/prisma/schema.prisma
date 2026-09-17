@@ -1,0 +1,43 @@
+generator client {
+  provider               = "prisma-client"
+  output                 = "../src/generated/prisma"
+  engineType             = "client"
+  runtime                = "nodejs"
+  moduleFormat           = "esm"
+  generatedFileExtension = "ts"
+  importFileExtension    = "js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Employee {
+  id            String         @id @default(cuid())
+  employeeCode  String         @unique
+  firstName     String
+  lastName      String
+  email         String         @unique
+  countryCode   String
+  department    String
+  jobTitle      String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  salaryRecords SalaryRecord[]
+
+  @@index([countryCode])
+  @@index([department])
+}
+
+model SalaryRecord {
+  id            String   @id @default(cuid())
+  employeeId    String
+  amountMinor   Int
+  currency      String
+  effectiveFrom DateTime
+  createdAt     DateTime @default(now())
+  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, effectiveFrom])
+}

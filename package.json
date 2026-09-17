@@ -8,8 +8,17 @@
     "node": ">=20.19.0",
     "pnpm": ">=10.0.0"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
   "scripts": {
     "build": "corepack pnpm --recursive --if-present run build",
+    "db:generate": "corepack pnpm --filter @acme/api db:generate",
+    "db:migrate": "corepack pnpm --filter @acme/api db:migrate",
+    "db:migrate:deploy": "corepack pnpm --filter @acme/api db:migrate:deploy",
+    "db:reset": "corepack pnpm --filter @acme/api db:reset",
     "dev": "concurrently --kill-others-on-fail --names api,web --prefix-colors blue,magenta \"corepack pnpm --filter @acme/api dev\" \"corepack pnpm --filter @acme/web dev\"",
     "format": "prettier --write .",
     "lint": "eslint . && prettier --check .",
@@ -20,6 +29,7 @@
     "@eslint/js": "^10.0.1",
     "@types/node": "^22.20.3",
     "concurrently": "^10.0.5",
+    "cross-env": "^10.1.0",
     "eslint": "^10.10.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^7.1.1",

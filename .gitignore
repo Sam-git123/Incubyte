@@ -6,6 +6,12 @@ coverage/
 *.tsbuildinfo
 .vite/
 .pnpm-store/
+apps/api/src/generated/prisma/
+
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
 
 .env
 .env.*

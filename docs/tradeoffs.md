@@ -18,6 +18,8 @@ Employee, salary, and analytics concerns can have clear module boundaries while 
 
 SQLite makes local setup and assessment review reproducible with little infrastructure. Prisma supplies type-safe access and a plausible migration path while avoiding a custom data framework. SQLite should be replaced if hosting lacks durable storage or production concurrency, availability, backup, or operational requirements demand PostgreSQL. Prisma itself should be reconsidered if generated queries prevent necessary correctness or performance.
 
+The initial implementation pins Prisma 6.19 and uses its local-file libSQL adapter. This avoids a current Prisma 7 migration-engine regression and avoids a native SQLite compilation requirement on Node 24. The pin and adapter are implementation choices, not domain commitments, and should be revisited when the upstream tooling is stable for the supported development environments.
+
 ## MUI DataGrid as the initial directory table
 
 MUI DataGrid aligns with the required Material UI stack and supplies accessible table behavior, sorting, and server-mode pagination with less bespoke UI work. Before implementation, required features must be checked against the community edition; licensing or customization limits would favor TanStack Table.
@@ -25,6 +27,12 @@ MUI DataGrid aligns with the required Material UI stack and supplies accessible 
 ## Effective-dated salary history instead of destructive updates
 
 Appending salary records preserves change history and supports auditability with a small conceptual model. It adds rules for choosing the current salary and handling future or duplicate effective dates, which must be specified before coding. A full temporal ledger or approval workflow is deferred unless audit requirements expand.
+
+The foreign key cascades salary deletion when its employee is deleted, preventing orphaned history. Future effective dates are permitted by design; this phase stores them but does not implement activation or approval workflows.
+
+## Employee attributes instead of reference tables
+
+Country, department, and job title are required string fields rather than separate tables. This keeps the first relational model and fixtures small while no management or metadata behavior exists for those concepts. Reference tables become worthwhile if later requirements introduce controlled vocabularies, renaming, localization, or additional attributes.
 
 ## Integer minor units instead of floating point
 

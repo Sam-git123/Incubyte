@@ -1,5 +1,29 @@
 import { z } from 'zod';
 
+export const SUPPORTED_CURRENCIES = [
+  'USD',
+  'EUR',
+  'GBP',
+  'INR',
+  'AED',
+  'SGD',
+  'AUD',
+  'CAD',
+] as const;
+
+export type SupportedCurrency = (typeof SUPPORTED_CURRENCIES)[number];
+
+export const CURRENCY_BY_COUNTRY = {
+  US: 'USD',
+  IN: 'INR',
+  AE: 'AED',
+  GB: 'GBP',
+  DE: 'EUR',
+  SG: 'SGD',
+  AU: 'AUD',
+  CA: 'CAD',
+} as const satisfies Readonly<Record<string, SupportedCurrency>>;
+
 const integerQueryParameterSchema = z
   .string()
   .regex(/^[1-9]\d*$/)
@@ -124,6 +148,28 @@ export type EmployeeDetailsResponse = z.infer<
   typeof employeeDetailsResponseSchema
 >;
 
+export const createSalaryRequestSchema = z
+  .object({
+    amountMinor: z.number(),
+    currency: z.string(),
+    effectiveFrom: z.iso.date(),
+  })
+  .strict();
+
+export type CreateSalaryRequest = z.infer<typeof createSalaryRequestSchema>;
+
+export const createdSalarySchema = salaryHistoryItemSchema.extend({
+  createdAt: z.iso.datetime(),
+});
+
+export type CreatedSalary = z.infer<typeof createdSalarySchema>;
+
+export const createSalaryResponseSchema = z
+  .object({ salary: createdSalarySchema })
+  .strict();
+
+export type CreateSalaryResponse = z.infer<typeof createSalaryResponseSchema>;
+
 export const apiErrorResponseSchema = z
   .object({
     error: z
@@ -131,6 +177,9 @@ export const apiErrorResponseSchema = z
         code: z.enum([
           'VALIDATION_ERROR',
           'EMPLOYEE_NOT_FOUND',
+          'INVALID_SALARY',
+          'UNSUPPORTED_CURRENCY',
+          'SALARY_EFFECTIVE_DATE_CONFLICT',
           'INTERNAL_ERROR',
         ]),
         message: z.string(),

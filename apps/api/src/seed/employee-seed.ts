@@ -1,4 +1,5 @@
 import {
+  CURRENCY_BY_COUNTRY,
   createSalary,
   type SupportedCurrency,
 } from '../modules/salaries/salary.js';
@@ -37,7 +38,7 @@ type DepartmentDefinition = Readonly<{
 export const COUNTRIES = [
   {
     code: 'US',
-    currency: 'USD',
+    currency: CURRENCY_BY_COUNTRY.US,
     weight: 25,
     salaryBands: {
       associate: [45_000, 70_000],
@@ -48,7 +49,7 @@ export const COUNTRIES = [
   },
   {
     code: 'IN',
-    currency: 'INR',
+    currency: CURRENCY_BY_COUNTRY.IN,
     weight: 25,
     salaryBands: {
       associate: [700_000, 1_400_000],
@@ -59,7 +60,7 @@ export const COUNTRIES = [
   },
   {
     code: 'AE',
-    currency: 'AED',
+    currency: CURRENCY_BY_COUNTRY.AE,
     weight: 12,
     salaryBands: {
       associate: [120_000, 190_000],
@@ -70,7 +71,7 @@ export const COUNTRIES = [
   },
   {
     code: 'GB',
-    currency: 'GBP',
+    currency: CURRENCY_BY_COUNTRY.GB,
     weight: 10,
     salaryBands: {
       associate: [35_000, 52_000],
@@ -81,7 +82,7 @@ export const COUNTRIES = [
   },
   {
     code: 'DE',
-    currency: 'EUR',
+    currency: CURRENCY_BY_COUNTRY.DE,
     weight: 8,
     salaryBands: {
       associate: [40_000, 58_000],
@@ -92,7 +93,7 @@ export const COUNTRIES = [
   },
   {
     code: 'SG',
-    currency: 'SGD',
+    currency: CURRENCY_BY_COUNTRY.SG,
     weight: 7,
     salaryBands: {
       associate: [55_000, 80_000],
@@ -103,7 +104,7 @@ export const COUNTRIES = [
   },
   {
     code: 'AU',
-    currency: 'AUD',
+    currency: CURRENCY_BY_COUNTRY.AU,
     weight: 7,
     salaryBands: {
       associate: [65_000, 90_000],
@@ -114,7 +115,7 @@ export const COUNTRIES = [
   },
   {
     code: 'CA',
-    currency: 'CAD',
+    currency: CURRENCY_BY_COUNTRY.CA,
     weight: 6,
     salaryBands: {
       associate: [55_000, 78_000],

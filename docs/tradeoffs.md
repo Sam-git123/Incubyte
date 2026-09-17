@@ -22,7 +22,15 @@ The initial implementation pins Prisma 6.19 and uses its local-file libSQL adapt
 
 ## MUI DataGrid as the initial directory table
 
-MUI DataGrid aligns with the required Material UI stack and supplies accessible table behavior, sorting, and server-mode pagination with less bespoke UI work. Before implementation, required features must be checked against the community edition; licensing or customization limits would favor TanStack Table.
+MUI DataGrid Community aligns with the Material UI stack and supplies accessible grid behavior, sorting, and server-mode pagination with less bespoke UI work. Phase 7 confirmed that the community edition covers the directory's current requirements. Licensing or customization limits should still trigger reconsideration before adopting paid-only behavior; TanStack Table remains the likely alternative when headless customization matters more than integrated components.
+
+## TanStack Query for server state, local state for directory controls
+
+TanStack Query owns request lifecycle, caching, retry, and refetch behavior, while search, filter, sort, and pagination controls remain local to the directory. This keeps the first screen small and avoids a routing dependency, but filters are not currently shareable through bookmarked URLs or browser history. URL-backed state should be reconsidered when deep links or navigation restoration become product requirements.
+
+## Development proxy and environment-based API path
+
+Vite proxies `/api` to the Fastify process during local development, avoiding a broad backend CORS policy. The client reads `VITE_API_BASE_URL` for deployment, with `/api` as the same-origin default. A deployment on separate browser-visible origins will require an explicit trusted-origin CORS policy or, preferably, a gateway/reverse proxy; permissive CORS was not added speculatively.
 
 ## Effective-dated salary history instead of destructive updates
 

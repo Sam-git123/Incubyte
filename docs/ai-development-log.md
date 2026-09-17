@@ -170,3 +170,23 @@ A local seeded PRNG was accepted instead of Faker so the data model and randomne
 - The real seed ran twice with identical counts: 10,000 employees and 14,064 salary records, with no employee missing salary.
 - The full dataset passed default-page, pagination, search, country filter, department filter, and sorting checks through `app.inject()`.
 - The complete workspace test, typecheck, lint, and build gates were run after documentation and refactoring.
+
+## 2026-09-17 — Phase 7 employee directory UI
+
+### Task
+
+Build the first production-facing React screen over `GET /api/employees`, including server-controlled pagination, debounced search, country and department filters, supported sorting, responsive presentation, and explicit loading, error, retry, and empty states.
+
+### AI contribution
+
+The AI agent translated the API contract into behavior-first React Testing Library cases, then implemented a small feature boundary around an API adapter, TanStack Query hook, local control state, filter controls, and MUI DataGrid. It also added exact URL-mapping tests and prepared the local Vite proxy and environment-based API path.
+
+### Engineering review
+
+MUI DataGrid Community and TanStack Query were accepted because their current features cover server-side directory behavior without custom table or request-state infrastructure. Search is trimmed and debounced for 300 ms; all data operations remain on the API; filters, sorting, and page-size changes reset to page one. Salary sorting remains unavailable because the API deliberately rejects it. URL-backed filter state, frontend routing, a generic API client, permissive CORS, and speculative employee actions were kept out of scope.
+
+### Verification
+
+- RED: the focused directory suite failed because the employee-directory implementation did not exist.
+- GREEN: component tests cover data, loading, retry, empty states, debounced search, filters, pagination, and sorting; API-adapter tests cover exact query serialization and safe failure behavior.
+- The implementation was checked against the seeded local API, followed by the full workspace test, typecheck, lint, and build gates.

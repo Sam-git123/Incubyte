@@ -1,6 +1,6 @@
 # Proposed Architecture
 
-> Status: Phase 6 deterministic seed implemented. The backend now provides a repeatable 10,000-employee synthetic dataset in addition to the Phase 5 employee query API; product UI remains future work.
+> Status: Phase 7 employee directory implemented. The React application now consumes the employee query API with server-driven search, filtering, sorting, and pagination over the deterministic 10,000-employee dataset.
 
 ## Overview
 
@@ -19,13 +19,13 @@ The browser will request only the employee page or analytics result it needs. Fi
 
 ## Proposed application structure
 
-- `apps/web`: React, Vite, TypeScript, Material UI, TanStack Query, React Hook Form, and Zod. UI code will be organized primarily by employee, salary, and analytics features.
+- `apps/web`: React, Vite, TypeScript, Material UI, MUI DataGrid, and TanStack Query. The implemented employee feature owns its API adapter, server-state hook, filters, table, and display formatting; later salary forms may introduce React Hook Form when needed.
 - `apps/api`: Fastify and TypeScript, with the salary domain kept separate from the Prisma client boundary. The employee route validates HTTP input, the service coordinates listing and response mapping, and the repository owns bounded database queries.
 - `apps/api/src/seed`: pure deterministic employee/salary generation, batched database insertion, and the executable seed entry point. Runtime API modules do not depend on seed code.
 - `packages/contracts`: shared Zod schemas and TypeScript request/response contracts for employee-list transport data. It does not contain business logic.
-- `apps/api/prisma`: the SQLite schema and versioned migrations. Generated Prisma Client code is reproducible through `pnpm db:generate` and excluded from version control. Deterministic bulk seeding remains a later phase.
+- `apps/api/prisma`: the SQLite schema and versioned migrations. Generated Prisma Client code is reproducible through `pnpm db:generate` and excluded from version control. Deterministic bulk seeding is available through `pnpm db:seed`.
 
-MUI DataGrid is the initial table choice because pagination, sorting, accessibility primitives, and Material UI integration match the directory needs. This remains a proposal until the employee-directory phase validates licensing and feature requirements.
+MUI DataGrid Community is the implemented directory table because its server modes, pagination controls, accessible grid semantics, and Material UI integration cover the current requirements without paid features.
 
 ## Domain and data model
 
@@ -45,19 +45,19 @@ Job titles come from department-specific weighted families. Synthetic annual sal
 
 ## Request flow
 
-1. React derives query parameters from the directory or dashboard state.
+1. React keeps directory controls in local component state, debounces search by 300 ms, converts DataGrid's zero-based page to the API's one-based page, and resets pagination when search, filters, page size, or sorting changes.
 2. Fastify validates path, query, and body data against explicit schemas. The employee list accepts bounded pagination plus `search`, `country`, `department`, `sortBy`, and `sortOrder`; arbitrary parameters and sort fields are rejected.
 3. A feature service applies business rules and asks its data-access code for bounded queries or database aggregations.
 4. Prisma applies the same database `where` conditions to the filtered count and page queries, then orders before applying offset pagination. Search trims input and ANDs whitespace-delimited terms; each term may match first name, last name, or employee code through SQLite's case-insensitive ASCII `LIKE` behavior. Country codes are uppercased and matched exactly, while trimmed departments retain exact casing.
 5. The page query includes at most one currently effective salary per employee, avoiding per-employee salary queries and unnecessary history in the response.
 6. The API returns typed success data or a predictable error envelope without stack traces.
-7. TanStack Query caches server state and invalidates affected employee and analytics queries after mutations.
+7. TanStack Query keys cached employee pages by the complete validated query. The Vite development server proxies `/api` to the local API; `VITE_API_BASE_URL` can select the deployed same-origin API path or gateway.
 
 The implemented API surface is currently `GET /api/employees` plus the bootstrap health route. Employee detail, salary mutation, and analytics endpoints remain proposed and will be refined incrementally.
 
 ## Quality and operational boundaries
 
-- Business behaviour will follow red-green-refactor TDD, with Fastify integration tests, focused React tests, and a few critical Playwright flows.
+- Business behaviour follows red-green-refactor TDD, with Fastify integration tests and focused React Testing Library tests. Browser automation beyond the requested manual Phase 7 check remains future work.
 - Employee listing uses bounded server-side offset pagination. Its allowlist supports employee code, first name, last name, department, and country, defaulting to `employeeCode ASC`; non-unique fields use `employeeCode ASC` as a stable secondary order.
 - Salary sorting is deliberately rejected: correct ordering would require a specialized query over each employee's current effective record, and raw minor-unit comparisons across currencies would be misleading.
 - Existing unique employee-code and country/department indexes support exact directory queries. No name index was added because the current contains search is not expected to benefit from a normal B-tree index.

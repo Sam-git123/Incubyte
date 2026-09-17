@@ -32,4 +32,25 @@ export const employeeRoutes: FastifyPluginAsync<EmployeeRoutesOptions> = async (
 
     return getEmployeeService().list(query.data, now());
   });
+
+  app.get<{ Params: { employeeId: string } }>(
+    '/api/employees/:employeeId',
+    async (request, reply) => {
+      const employee = await getEmployeeService().getById(
+        request.params.employeeId,
+        now(),
+      );
+
+      if (!employee) {
+        return reply.status(404).send({
+          error: {
+            code: 'EMPLOYEE_NOT_FOUND',
+            message: 'Employee not found.',
+          },
+        });
+      }
+
+      return employee;
+    },
+  );
 };

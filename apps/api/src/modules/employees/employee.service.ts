@@ -1,4 +1,5 @@
 import type {
+  EmployeeDetailsResponse,
   EmployeeListQuery,
   EmployeeListResponse,
   EmployeeSortField,
@@ -60,6 +61,36 @@ export class EmployeeService {
         total,
         totalPages: Math.ceil(total / pageSize),
       },
+    };
+  }
+
+  async getById(
+    employeeId: string,
+    asOf: Date,
+  ): Promise<EmployeeDetailsResponse | null> {
+    const employee = await this.employeeRepository.findDetailsById(employeeId);
+
+    if (!employee) {
+      return null;
+    }
+
+    const currentSalary = employee.salaryHistory.find(
+      (salary) => salary.effectiveFrom <= asOf,
+    );
+
+    return {
+      ...employee,
+      currentSalary: currentSalary
+        ? {
+            amountMinor: currentSalary.amountMinor,
+            currency: currentSalary.currency,
+            effectiveFrom: currentSalary.effectiveFrom.toISOString(),
+          }
+        : null,
+      salaryHistory: employee.salaryHistory.map((salary) => ({
+        ...salary,
+        effectiveFrom: salary.effectiveFrom.toISOString(),
+      })),
     };
   }
 }

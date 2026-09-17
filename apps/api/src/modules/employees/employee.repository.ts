@@ -25,6 +25,16 @@ export type EmployeePage = {
   total: number;
 };
 
+export type EmployeeDetailsRecord = CreateEmployeeInput & {
+  id: string;
+  salaryHistory: {
+    id: string;
+    amountMinor: number;
+    currency: string;
+    effectiveFrom: Date;
+  }[];
+};
+
 export type EmployeeListOptions = {
   offset: number;
   limit: number;
@@ -70,6 +80,39 @@ export class EmployeeRepository {
     });
   }
 
+  async findDetailsById(id: string): Promise<EmployeeDetailsRecord | null> {
+    const employee = await this.prisma.employee.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        employeeCode: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        countryCode: true,
+        department: true,
+        jobTitle: true,
+        salaryRecords: {
+          orderBy: salaryRecordOrderBy,
+          select: {
+            id: true,
+            amountMinor: true,
+            currency: true,
+            effectiveFrom: true,
+          },
+        },
+      },
+    });
+
+    if (!employee) {
+      return null;
+    }
+
+    const { salaryRecords, ...details } = employee;
+
+    return { ...details, salaryHistory: salaryRecords };
+  }
+
   async listPage({
     offset,
     limit,
@@ -99,11 +142,7 @@ export class EmployeeRepository {
           jobTitle: true,
           salaryRecords: {
             where: { effectiveFrom: { lte: asOf } },
-            orderBy: [
-              { effectiveFrom: 'desc' },
-              { createdAt: 'desc' },
-              { id: 'desc' },
-            ],
+            orderBy: salaryRecordOrderBy,
             take: 1,
             select: {
               amountMinor: true,
@@ -124,6 +163,12 @@ export class EmployeeRepository {
     };
   }
 }
+
+const salaryRecordOrderBy = [
+  { effectiveFrom: 'desc' },
+  { createdAt: 'desc' },
+  { id: 'desc' },
+] satisfies Prisma.SalaryRecordOrderByWithRelationInput[];
 
 function buildEmployeeOrderBy(
   sortBy: EmployeeOrderField,

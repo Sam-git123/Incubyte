@@ -106,11 +106,33 @@ export const employeeListResponseSchema = z
 
 export type EmployeeListResponse = z.infer<typeof employeeListResponseSchema>;
 
+export const salaryHistoryItemSchema = currentSalarySchema.extend({
+  id: z.string(),
+});
+
+export type SalaryHistoryItem = z.infer<typeof salaryHistoryItemSchema>;
+
+export const employeeDetailsResponseSchema = employeeListItemSchema
+  .omit({ currentSalary: true })
+  .extend({
+    currentSalary: currentSalarySchema.nullable(),
+    salaryHistory: z.array(salaryHistoryItemSchema),
+  })
+  .strict();
+
+export type EmployeeDetailsResponse = z.infer<
+  typeof employeeDetailsResponseSchema
+>;
+
 export const apiErrorResponseSchema = z
   .object({
     error: z
       .object({
-        code: z.enum(['VALIDATION_ERROR', 'INTERNAL_ERROR']),
+        code: z.enum([
+          'VALIDATION_ERROR',
+          'EMPLOYEE_NOT_FOUND',
+          'INTERNAL_ERROR',
+        ]),
         message: z.string(),
       })
       .strict(),

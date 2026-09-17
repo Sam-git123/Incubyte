@@ -63,3 +63,25 @@ No employee, salary, analytics, database, UI-library, or deployment concerns wer
 - `pnpm typecheck`: passed for API, web, and contracts packages.
 - `pnpm test`: passed two tests across two test files.
 - `pnpm build`: produced successful API, web, and contracts builds.
+
+## 2026-09-17 — Phase 2 salary value behaviour
+
+### Task
+
+Define and implement the first salary-domain rules through a red-green-refactor TDD cycle, without adding transport, persistence, or UI concerns.
+
+### AI contribution
+
+The AI agent translated the requested rules into explicit tests for valid, zero, negative, fractional, unsupported, lowercase, and malformed inputs. It first demonstrated the expected missing-module failure, then added the minimum plain-TypeScript implementation.
+
+### Engineering review
+
+A `createSalary` function was chosen over a class because the value has no behavior beyond validated construction. A dedicated `SalaryValidationError`, one centralized currency tuple, a derived currency type, and a frozen return value were accepted. A broader Money framework, external library, currency conversion, and additional layers were deliberately rejected as unnecessary.
+
+The refactor review removed a duplicate test-only input type; no further abstraction improved the code.
+
+### Verification
+
+- RED: the focused salary suite failed because the production module did not exist.
+- GREEN: the focused suite passed all eight generated cases after implementation and refactoring.
+- The full test suite, strict TypeScript check, and lint/format checks passed.

@@ -1,6 +1,21 @@
-import type { EmployeeListQuery, EmployeeListResponse } from '@acme/contracts';
+import type {
+  EmployeeListQuery,
+  EmployeeListResponse,
+  EmployeeSortField,
+} from '@acme/contracts';
 
-import type { EmployeeRepository } from './employee.repository.js';
+import type {
+  EmployeeOrderField,
+  EmployeeRepository,
+} from './employee.repository.js';
+
+const repositorySortFields: Record<EmployeeSortField, EmployeeOrderField> = {
+  employeeCode: 'employeeCode',
+  firstName: 'firstName',
+  lastName: 'lastName',
+  department: 'department',
+  country: 'countryCode',
+};
 
 export class EmployeeService {
   constructor(private readonly employeeRepository: EmployeeRepository) {}
@@ -9,12 +24,25 @@ export class EmployeeService {
     query: EmployeeListQuery,
     asOf: Date,
   ): Promise<EmployeeListResponse> {
-    const { page, pageSize } = query;
-    const { employees, total } = await this.employeeRepository.listPage(
-      (page - 1) * pageSize,
+    const {
+      page,
       pageSize,
+      search,
+      country,
+      department,
+      sortBy = 'employeeCode',
+      sortOrder = 'asc',
+    } = query;
+    const { employees, total } = await this.employeeRepository.listPage({
+      offset: (page - 1) * pageSize,
+      limit: pageSize,
       asOf,
-    );
+      search,
+      country,
+      department,
+      sortBy: repositorySortFields[sortBy],
+      sortOrder,
+    });
 
     return {
       data: employees.map((employee) => ({

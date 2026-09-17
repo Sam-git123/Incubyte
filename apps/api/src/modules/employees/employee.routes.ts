@@ -16,10 +16,16 @@ export const employeeRoutes: FastifyPluginAsync<EmployeeRoutesOptions> = async (
     const query = employeeListQuerySchema.safeParse(request.query);
 
     if (!query.success) {
+      const hasOnlyPaginationErrors = query.error.issues.every((issue) =>
+        ['page', 'pageSize'].includes(String(issue.path[0])),
+      );
+
       return reply.status(400).send({
         error: {
           code: 'VALIDATION_ERROR',
-          message: 'Invalid pagination parameters.',
+          message: hasOnlyPaginationErrors
+            ? 'Invalid pagination parameters.'
+            : 'Invalid employee query parameters.',
         },
       });
     }

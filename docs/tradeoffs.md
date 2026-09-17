@@ -42,7 +42,15 @@ Integer minor units prevent ordinary binary floating-point errors and make the A
 
 Ten thousand records could sometimes fit in browser memory, but transferring and processing the entire data set increases payloads, weakens query consistency, and scales poorly. Bounded server queries also mirror a realistic production design. Client-side processing may still be appropriate for an already loaded small result set, but not for the primary directory or organization-wide analytics.
 
-The first listing endpoint uses simple `page`/`pageSize` offset pagination, capped at 100 rows, with `employeeCode ASC` as its fixed stable order. This produces understandable metadata and predictable page boundaries for the assessment. Cursor pagination should be reconsidered if deep-page performance or frequent concurrent inserts become material; configurable ordering is deliberately deferred until its supported fields are specified.
+The listing endpoint uses simple `page`/`pageSize` offset pagination, capped at 100 rows. It defaults to `employeeCode ASC` and allow-lists employee code, first name, last name, department, and country; non-unique fields add employee code as a stable secondary order. This produces understandable metadata and predictable page boundaries for the assessment. Cursor pagination should be reconsidered if deep-page performance or frequent concurrent inserts become material.
+
+## Database-backed contains search instead of search infrastructure
+
+At the expected 10,000-employee scale, SQLite `contains` predicates over first name, last name, and employee code are a clear baseline. Whitespace-delimited terms are ANDed so full names work without a denormalized column or raw SQL concatenation. This relies on SQLite's case-insensitive ASCII `LIKE` behavior; broader Unicode collation or materially larger data could justify full-text search later. Normal first/last-name indexes were not added because leading-wildcard contains queries generally cannot use them effectively.
+
+## Defer salary sorting
+
+Salary sorting is not in the allowlist. Correctly ordering before pagination requires a database-level query over the latest currently effective salary, while comparing minor-unit values across currencies is not economically meaningful. Loading all employees to sort in Node.js was rejected because it would break server-side pagination. Salary sorting can be revisited with an explicit currency policy and a maintainable database query; until then, `sortBy=salary` returns a validation error.
 
 ## Currency-separated analytics instead of automatic conversion
 

@@ -5,6 +5,34 @@ const integerQueryParameterSchema = z
   .regex(/^[1-9]\d*$/)
   .transform(Number);
 
+const searchQueryParameterSchema = z
+  .string()
+  .trim()
+  .max(100)
+  .transform((search) => search || undefined);
+
+const countryQueryParameterSchema = z
+  .string()
+  .trim()
+  .transform((country) => country.toUpperCase())
+  .pipe(z.string().regex(/^[A-Z]{2}$/));
+
+const departmentQueryParameterSchema = z.string().trim().min(1).max(100);
+
+export const employeeSortFieldSchema = z.enum([
+  'employeeCode',
+  'firstName',
+  'lastName',
+  'department',
+  'country',
+]);
+
+export type EmployeeSortField = z.infer<typeof employeeSortFieldSchema>;
+
+export const sortOrderSchema = z.enum(['asc', 'desc']);
+
+export type SortOrder = z.infer<typeof sortOrderSchema>;
+
 export const employeeListQuerySchema = z
   .object({
     page: integerQueryParameterSchema
@@ -13,8 +41,22 @@ export const employeeListQuerySchema = z
     pageSize: integerQueryParameterSchema
       .pipe(z.number().int().safe().min(1).max(100))
       .default(25),
+    search: searchQueryParameterSchema.optional(),
+    country: countryQueryParameterSchema.optional(),
+    department: departmentQueryParameterSchema.optional(),
+    sortBy: employeeSortFieldSchema.optional(),
+    sortOrder: sortOrderSchema.optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((query, context) => {
+    if (query.sortOrder && !query.sortBy) {
+      context.addIssue({
+        code: 'custom',
+        path: ['sortOrder'],
+        message: 'sortOrder requires sortBy.',
+      });
+    }
+  });
 
 export type EmployeeListQuery = z.infer<typeof employeeListQuerySchema>;
 

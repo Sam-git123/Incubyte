@@ -195,17 +195,17 @@ describe('GET /api/employees', () => {
     },
   );
 
-  it('rejects query parameters outside this phase', async () => {
+  it('rejects unsupported query parameters', async () => {
     const response = await app.inject({
       method: 'GET',
-      url: '/api/employees?search=Ava',
+      url: '/api/employees?unknown=Ava',
     });
 
     expect(response.statusCode).toBe(400);
     expect(response.json()).toEqual({
       error: {
         code: 'VALIDATION_ERROR',
-        message: 'Invalid pagination parameters.',
+        message: 'Invalid employee query parameters.',
       },
     });
   });

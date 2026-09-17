@@ -127,3 +127,24 @@ The engineer-requested defaults, limits, empty-page behavior, and `employeeCode 
 - RED: all 17 focused API cases failed with `404` because the route did not exist.
 - GREEN: the focused suite passed after the minimum endpoint implementation.
 - The complete workspace test, typecheck, lint, and build gates were run after refactoring and documentation updates.
+
+## 2026-09-17 — Phase 5 employee search, filtering, and sorting
+
+### Task
+
+Extend `GET /api/employees` with composable database-backed search, country and department filters, and strict user-controlled sorting while preserving pagination and current-salary behavior.
+
+### AI contribution
+
+The AI agent developed search, filter, and sorting behavior in separate red-green cycles. It proposed one reusable Prisma `where` object for the count and page queries, token-based full-name search without a schema change, normalization at the transport boundary, and an explicit sort allowlist with stable secondary ordering.
+
+### Engineering review
+
+Accepted behavior includes a 100-character trimmed search, uppercase two-letter country input, exact trimmed department matching, AND composition across filters, five safe sort fields, and rejection of orphaned or invalid sort options. Salary sorting was deliberately deferred because correct current-effective ordering needs specialized database work and raw cross-currency comparisons are misleading. An in-memory fetch/sort/paginate approach was rejected because it violates server-side pagination. No speculative name indexes or search infrastructure were added.
+
+### Verification
+
+- RED search: 9 expected failures before `search` was accepted.
+- RED filters: 7 expected failures before country and department predicates existed.
+- RED sorting: 6 expected failures before allow-listed database ordering existed.
+- Each capability passed its focused integration suite before the next was started; the complete workspace quality gate was run after refactoring and documentation updates.

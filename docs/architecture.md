@@ -1,6 +1,6 @@
 # Proposed Architecture
 
-> Status: Phase 4 employee listing API implemented. The persistence foundation now supports a validated, paginated `GET /api/employees` endpoint; search, filters, configurable sorting, and product UI remain future work.
+> Status: Phase 5 employee querying implemented. `GET /api/employees` now supports validated search, country and department filters, allow-listed sorting, and filter-aware pagination; product UI and deterministic bulk seed data remain future work.
 
 ## Overview
 
@@ -39,18 +39,21 @@ Analytics will group salary values by currency whenever aggregation could cross 
 ## Request flow
 
 1. React derives query parameters from the directory or dashboard state.
-2. Fastify validates path, query, and body data against explicit schemas. The implemented employee list accepts only integer `page` and `pageSize` values, with defaults of 1 and 25 and a maximum page size of 100.
+2. Fastify validates path, query, and body data against explicit schemas. The employee list accepts bounded pagination plus `search`, `country`, `department`, `sortBy`, and `sortOrder`; arbitrary parameters and sort fields are rejected.
 3. A feature service applies business rules and asks its data-access code for bounded queries or database aggregations.
-4. Prisma counts employees and retrieves only the requested page in `employeeCode ASC` order. The page query includes at most one currently effective salary per employee, avoiding per-employee salary queries and unnecessary history in the response.
-5. The API returns typed success data or a predictable error envelope without stack traces.
-6. TanStack Query caches server state and invalidates affected employee and analytics queries after mutations.
+4. Prisma applies the same database `where` conditions to the filtered count and page queries, then orders before applying offset pagination. Search trims input and ANDs whitespace-delimited terms; each term may match first name, last name, or employee code through SQLite's case-insensitive ASCII `LIKE` behavior. Country codes are uppercased and matched exactly, while trimmed departments retain exact casing.
+5. The page query includes at most one currently effective salary per employee, avoiding per-employee salary queries and unnecessary history in the response.
+6. The API returns typed success data or a predictable error envelope without stack traces.
+7. TanStack Query caches server state and invalidates affected employee and analytics queries after mutations.
 
 The implemented API surface is currently `GET /api/employees` plus the bootstrap health route. Employee detail, salary mutation, and analytics endpoints remain proposed and will be refined incrementally.
 
 ## Quality and operational boundaries
 
 - Business behaviour will follow red-green-refactor TDD, with Fastify integration tests, focused React tests, and a few critical Playwright flows.
-- Employee listing uses bounded server-side offset pagination and a fixed `employeeCode ASC` order. Configurable, allow-listed sorting belongs to a later phase; indexes will continue to be selected from actual query patterns.
+- Employee listing uses bounded server-side offset pagination. Its allowlist supports employee code, first name, last name, department, and country, defaulting to `employeeCode ASC`; non-unique fields use `employeeCode ASC` as a stable secondary order.
+- Salary sorting is deliberately rejected: correct ordering would require a specialized query over each employee's current effective record, and raw minor-unit comparisons across currencies would be misleading.
+- Existing unique employee-code and country/department indexes support exact directory queries. No name index was added because the current contains search is not expected to benefit from a normal B-tree index.
 - Persistence tests recreate an ignored `prisma/test.db` from committed migrations for each suite and clear tables between cases, so they never use developer data or depend on execution order.
 - The API will validate independently of the UI, avoid sensitive-value logging, and expose consistent error codes.
 - The modular boundaries leave a natural place to add authentication later, but production-grade identity, audit, encryption, and privacy controls are explicitly not implemented yet.

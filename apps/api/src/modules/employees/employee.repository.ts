@@ -1,4 +1,4 @@
-import type { PrismaClient } from '../../generated/prisma/client.js';
+import type { Prisma, PrismaClient } from '../../generated/prisma/client.js';
 import type { Salary } from '../salaries/salary.js';
 
 export type CreateEmployeeInput = {
@@ -24,6 +24,22 @@ export type EmployeePage = {
   employees: EmployeeListRecord[];
   total: number;
 };
+
+export type EmployeeListOptions = {
+  offset: number;
+  limit: number;
+  asOf: Date;
+  search?: string | undefined;
+  country?: string | undefined;
+  department?: string | undefined;
+  sortBy: EmployeeOrderField;
+  sortOrder: EmployeeSortOrder;
+};
+
+export type EmployeeOrderField =
+  'employeeCode' | 'firstName' | 'lastName' | 'department' | 'countryCode';
+
+export type EmployeeSortOrder = 'asc' | 'desc';
 
 export class EmployeeRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -54,17 +70,24 @@ export class EmployeeRepository {
     });
   }
 
-  async listPage(
-    offset: number,
-    limit: number,
-    asOf: Date,
-  ): Promise<EmployeePage> {
+  async listPage({
+    offset,
+    limit,
+    asOf,
+    search,
+    country,
+    department,
+    sortBy,
+    sortOrder,
+  }: EmployeeListOptions): Promise<EmployeePage> {
+    const where = buildEmployeeWhere({ search, country, department });
     const [total, employees] = await this.prisma.$transaction([
-      this.prisma.employee.count(),
+      this.prisma.employee.count({ where }),
       this.prisma.employee.findMany({
+        where,
         skip: offset,
         take: limit,
-        orderBy: { employeeCode: 'asc' },
+        orderBy: buildEmployeeOrderBy(sortBy, sortOrder),
         select: {
           id: true,
           employeeCode: true,
@@ -100,4 +123,52 @@ export class EmployeeRepository {
       })),
     };
   }
+}
+
+function buildEmployeeOrderBy(
+  sortBy: EmployeeOrderField,
+  sortOrder: EmployeeSortOrder,
+): Prisma.EmployeeOrderByWithRelationInput[] {
+  const primaryOrderBy: Record<
+    EmployeeOrderField,
+    Prisma.EmployeeOrderByWithRelationInput
+  > = {
+    employeeCode: { employeeCode: sortOrder },
+    firstName: { firstName: sortOrder },
+    lastName: { lastName: sortOrder },
+    department: { department: sortOrder },
+    countryCode: { countryCode: sortOrder },
+  };
+  const orderBy = [primaryOrderBy[sortBy]];
+
+  if (sortBy !== 'employeeCode') {
+    orderBy.push({ employeeCode: 'asc' });
+  }
+
+  return orderBy;
+}
+
+function buildEmployeeWhere({
+  search,
+  country,
+  department,
+}: Pick<
+  EmployeeListOptions,
+  'search' | 'country' | 'department'
+>): Prisma.EmployeeWhereInput {
+  return {
+    ...(country ? { countryCode: country } : {}),
+    ...(department ? { department } : {}),
+    ...(search
+      ? {
+          AND: search.split(/\s+/).map((term) => ({
+            OR: [
+              { firstName: { contains: term } },
+              { lastName: { contains: term } },
+              { employeeCode: { contains: term } },
+            ],
+          })),
+        }
+      : {}),
+  };
 }

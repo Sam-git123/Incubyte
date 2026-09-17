@@ -2,6 +2,7 @@ import type {
   EmployeeDetailsResponse,
   SalaryHistoryItem,
 } from '@acme/contracts';
+import { CURRENCY_BY_COUNTRY } from '@acme/contracts';
 import {
   Alert,
   Box,
@@ -9,6 +10,7 @@ import {
   Chip,
   Divider,
   Paper,
+  Snackbar,
   Skeleton,
   Stack,
   Table,
@@ -19,6 +21,7 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
+import { useState } from 'react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 
 import { EmployeeApiError } from '../api/employee-details-api';
@@ -26,6 +29,7 @@ import { getCountryLabel } from '../employee-options';
 import { useEmployee } from '../hooks/useEmployee';
 import { formatDate } from '../utils/date-format';
 import { formatSalary } from '../utils/salary-format';
+import { SalaryChangeDialog } from '../../salaries/components/SalaryChangeDialog';
 
 export function EmployeeDetails() {
   const { employeeId = '' } = useParams();
@@ -75,6 +79,15 @@ function EmployeeDetailsContent({
 }: {
   employee: EmployeeDetailsResponse;
 }) {
+  const [salaryDialogOpen, setSalaryDialogOpen] = useState(false);
+  const [successVisible, setSuccessVisible] = useState(false);
+  const salaryCurrency =
+    employee.currentSalary?.currency ??
+    employee.salaryHistory[0]?.currency ??
+    CURRENCY_BY_COUNTRY[
+      employee.countryCode as keyof typeof CURRENCY_BY_COUNTRY
+    ];
+
   return (
     <PageFrame>
       <Box>
@@ -97,10 +110,39 @@ function EmployeeDetailsContent({
         }}
       >
         <InformationSection employee={employee} />
-        <CurrentSalarySection employee={employee} />
+        <CurrentSalarySection
+          employee={employee}
+          onChangeSalary={() => setSalaryDialogOpen(true)}
+        />
       </Box>
 
-      <SalaryHistorySection salaryHistory={employee.salaryHistory} />
+      <SalaryHistorySection
+        currentSalary={employee.currentSalary}
+        salaryHistory={employee.salaryHistory}
+      />
+
+      {salaryCurrency && salaryDialogOpen ? (
+        <SalaryChangeDialog
+          currency={salaryCurrency}
+          currentSalary={employee.currentSalary}
+          employeeId={employee.id}
+          onClose={() => setSalaryDialogOpen(false)}
+          onSaved={() => {
+            setSalaryDialogOpen(false);
+            setSuccessVisible(true);
+          }}
+          open={salaryDialogOpen}
+        />
+      ) : null}
+      <Snackbar
+        autoHideDuration={4_000}
+        onClose={() => setSuccessVisible(false)}
+        open={successVisible}
+      >
+        <Alert severity="success" variant="filled">
+          Salary change saved.
+        </Alert>
+      </Snackbar>
     </PageFrame>
   );
 }
@@ -172,8 +214,10 @@ function InformationSection({
 
 function CurrentSalarySection({
   employee,
+  onChangeSalary,
 }: {
   employee: EmployeeDetailsResponse;
+  onChangeSalary: () => void;
 }) {
   return (
     <Paper
@@ -202,15 +246,22 @@ function CurrentSalarySection({
           No current salary recorded.
         </Typography>
       )}
+      <Button onClick={onChangeSalary} sx={{ mt: 2 }} variant="contained">
+        Change salary
+      </Button>
     </Paper>
   );
 }
 
 function SalaryHistorySection({
+  currentSalary,
   salaryHistory,
 }: {
+  currentSalary: EmployeeDetailsResponse['currentSalary'];
   salaryHistory: SalaryHistoryItem[];
 }) {
+  const now = new Date();
+
   return (
     <Box component="section">
       <Typography component="h3" sx={{ fontWeight: 750, mb: 1.5 }} variant="h6">
@@ -235,7 +286,12 @@ function SalaryHistorySection({
             </TableHead>
             <TableBody>
               {salaryHistory.map((salary) => {
-                const scheduled = new Date(salary.effectiveFrom) > new Date();
+                const scheduled = new Date(salary.effectiveFrom) > now;
+                const current =
+                  !scheduled &&
+                  currentSalary?.effectiveFrom === salary.effectiveFrom &&
+                  currentSalary.amountMinor === salary.amountMinor &&
+                  currentSalary.currency === salary.currency;
 
                 return (
                   <TableRow key={salary.id}>
@@ -245,8 +301,10 @@ function SalaryHistorySection({
                     <TableCell>
                       {scheduled ? (
                         <Chip label="Scheduled" size="small" />
+                      ) : current ? (
+                        <Chip color="success" label="Current" size="small" />
                       ) : (
-                        'Effective'
+                        'Historical'
                       )}
                     </TableCell>
                   </TableRow>

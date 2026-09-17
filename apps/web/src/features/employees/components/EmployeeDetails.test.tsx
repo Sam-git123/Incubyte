@@ -45,6 +45,55 @@ describe('EmployeeDetails', () => {
     expect(screen.getByText('United Arab Emirates')).toBeInTheDocument();
     expect(screen.getAllByText('AED 300,000.00').length).toBeGreaterThan(0);
     expect(screen.getByText('Effective Jan 1, 2026')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Change salary' }),
+    ).toBeInTheDocument();
+  });
+
+  it('opens the salary change dialog from employee details', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    mockedGetEmployee.mockResolvedValue(employeeDetailsResponse());
+    renderDetails();
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Change salary' }),
+    );
+
+    expect(
+      screen.getByRole('dialog', { name: 'Change salary' }),
+    ).toBeInTheDocument();
+  });
+
+  it('shows success feedback after a salary change', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    mockedGetEmployee.mockResolvedValue(employeeDetailsResponse());
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            salary: {
+              id: 'salary-new',
+              amountMinor: 31_000_000,
+              currency: 'AED',
+              effectiveFrom: '2026-10-01T00:00:00.000Z',
+              createdAt: '2026-09-17T12:00:00.000Z',
+            },
+          }),
+          { status: 201, headers: { 'Content-Type': 'application/json' } },
+        ),
+      ),
+    );
+    renderDetails();
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Change salary' }),
+    );
+    await user.type(screen.getByLabelText('New annual salary'), '310000');
+    await user.type(screen.getByLabelText('Effective date'), '2026-10-01');
+    await user.click(screen.getByRole('button', { name: 'Save change' }));
+
+    expect(await screen.findByText('Salary change saved.')).toBeInTheDocument();
   });
 
   it('renders salary history newest first and labels future records', async () => {
@@ -58,7 +107,9 @@ describe('EmployeeDetails', () => {
     expect(within(rows[0]!).getByText('Jan 1, 2027')).toBeInTheDocument();
     expect(within(rows[0]!).getByText('Scheduled')).toBeInTheDocument();
     expect(within(rows[1]!).getByText('Jan 1, 2026')).toBeInTheDocument();
+    expect(within(rows[1]!).getByText('Current')).toBeInTheDocument();
     expect(within(rows[2]!).getByText('Jan 1, 2025')).toBeInTheDocument();
+    expect(within(rows[2]!).getByText('Historical')).toBeInTheDocument();
   });
 
   it('renders a clear empty salary state', async () => {

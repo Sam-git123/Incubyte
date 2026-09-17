@@ -211,3 +211,23 @@ Internal employee IDs remain opaque: unknown or malformed-looking strings receiv
 - RED frontend: the details modules were absent and employee names were not navigation links.
 - GREEN: focused API and frontend suites cover the detail contract, salary timing and ordering, navigation, rendering, loading, retry, not-found, no-salary, and dedicated resource request.
 - The seeded application workflow and complete workspace quality gates were checked after refactoring.
+
+## 2026-09-18 — Phase 9 salary changes
+
+### Task
+
+Add an append-only employee salary-change API and a details-page workflow while preserving current/future salary semantics and existing history.
+
+### AI contribution
+
+The AI agent translated the workflow into failing API and UI tests, proposed the route-service-repository boundary, added duplicate-date concurrency protection, and implemented a React Hook Form/Zod dialog with exact decimal-string conversion and TanStack Query invalidation.
+
+### Engineering review
+
+Appending a new effective-dated record was accepted; overwriting the current salary was rejected because it destroys history. Future dates and unambiguous backdating are allowed, while duplicate employee/date rows are rejected by both application behavior and a database unique constraint. Currency remains consistent with existing history or the centralized country mapping. JavaScript `value * 100`, free-form currency choice, a generic command framework, and authentication/audit expansion were deliberately rejected.
+
+### Verification
+
+- RED backend: salary creation, validation, timing, history, currency, not-found, and conflict cases failed against the missing route.
+- RED frontend: conversion/dialog modules and the details-page entry point were absent.
+- GREEN: focused Fastify, form, mutation, details, and conversion suites passed before the full workspace quality gates, clean migration/seed check, and seeded manual API workflow.

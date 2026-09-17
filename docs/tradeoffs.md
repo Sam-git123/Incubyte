@@ -42,7 +42,13 @@ Vite proxies `/api` to the Fastify process during local development, avoiding a 
 
 Appending salary records preserves change history and supports auditability with a small conceptual model. It adds rules for choosing the current salary and handling future or duplicate effective dates, which must be specified before coding. A full temporal ledger or approval workflow is deferred unless audit requirements expand.
 
-The foreign key cascades salary deletion when its employee is deleted, preventing orphaned history. Future effective dates are permitted by design; this phase stores them but does not implement activation or approval workflows.
+The foreign key cascades salary deletion when its employee is deleted, preventing orphaned history. Phase 9 permits future dates and unambiguous backdating, but does not implement activation, approval, or retroactive payroll workflows. `(employeeId, effectiveFrom)` is unique: application checks provide a clear conflict response while the database remains the concurrency-safe final guard.
+
+Salary currency remains fixed to the employee's established history; when no history exists, the country/currency configuration supplies the expected currency. This avoids silently mixing currencies within one employee's timeline. Supporting relocation or explicit currency changes would require a separate product rule rather than weakening this invariant.
+
+The browser accepts a decimal major-unit string for usability and converts its digit groups to integer minor units. This is slightly more code than multiplying a JavaScript number by 100, but avoids binary floating-point surprises and makes the two-decimal-place limit explicit. Effective dates are calendar dates represented as UTC midnight in transport and persistence, preventing browser timezone shifts.
+
+Append-only history is not a complete audit log. `createdAt` records persistence time, but the system still lacks actor identity, reason, approval, and immutable audit events. Those controls require future authentication and authorization work and are deliberately outside this assessment phase.
 
 ## Employee attributes instead of reference tables
 

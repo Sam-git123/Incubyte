@@ -1,6 +1,6 @@
 # Proposed Architecture
 
-> Status: Phase 5 employee querying implemented. `GET /api/employees` now supports validated search, country and department filters, allow-listed sorting, and filter-aware pagination; product UI and deterministic bulk seed data remain future work.
+> Status: Phase 6 deterministic seed implemented. The backend now provides a repeatable 10,000-employee synthetic dataset in addition to the Phase 5 employee query API; product UI remains future work.
 
 ## Overview
 
@@ -21,6 +21,7 @@ The browser will request only the employee page or analytics result it needs. Fi
 
 - `apps/web`: React, Vite, TypeScript, Material UI, TanStack Query, React Hook Form, and Zod. UI code will be organized primarily by employee, salary, and analytics features.
 - `apps/api`: Fastify and TypeScript, with the salary domain kept separate from the Prisma client boundary. The employee route validates HTTP input, the service coordinates listing and response mapping, and the repository owns bounded database queries.
+- `apps/api/src/seed`: pure deterministic employee/salary generation, batched database insertion, and the executable seed entry point. Runtime API modules do not depend on seed code.
 - `packages/contracts`: shared Zod schemas and TypeScript request/response contracts for employee-list transport data. It does not contain business logic.
 - `apps/api/prisma`: the SQLite schema and versioned migrations. Generated Prisma Client code is reproducible through `pnpm db:generate` and excluded from version control. Deterministic bulk seeding remains a later phase.
 
@@ -35,6 +36,12 @@ Future-dated salary records are intentionally allowed. The employee listing deri
 Salary amount and supported-currency validation remain in the plain TypeScript domain. SQLite complements those rules with integer storage, required fields, uniqueness, and referential integrity; it does not duplicate the supported-currency list.
 
 Analytics will group salary values by currency whenever aggregation could cross currencies. No base-currency conversion or external FX dependency is proposed.
+
+## Deterministic synthetic data
+
+`pnpm db:seed` recreates all employee and salary data from seed `42`, producing deterministic IDs, `EMP000001`–`EMP010000` codes, fictional `acme.example` emails, and fixed persistence/effective-date ranges. The generator targets this country distribution: US 25%, IN 25%, AE 12%, GB 10%, DE 8%, SG 7%, AU 7%, and CA 6%. Its department targets are Engineering 30%, Sales 18%, Operations 14%, Customer Success 12%, Product 9%, Finance 7%, Marketing 6%, and Human Resources 4%.
+
+Job titles come from department-specific weighted families. Synthetic annual salaries use country- and seniority-level bands plus a small department multiplier, are rounded to whole hundreds of major units, converted to integer minor units, and validated by the salary domain. The data is illustrative rather than a statement of market compensation. About 24% of employees receive two records and 8% receive three; all effective dates are fixed within or before 2026, and later records never reduce salary.
 
 ## Request flow
 

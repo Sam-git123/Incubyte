@@ -59,3 +59,11 @@ Adding unlike currencies creates misleading results. Initial metrics will theref
 ## Shared validation contracts, limited to transport concerns
 
 Sharing Zod schemas and TypeScript API types can keep the React client and Fastify API aligned. Keeping business logic out of the contracts package avoids coupling domain behavior to transport types. Sharing should remain selective: duplication is preferable when a shared abstraction would blur distinct frontend and backend responsibilities.
+
+## Small seeded generator instead of Faker
+
+The assessment seed uses a small deterministic PRNG plus curated name, country, department, title, and salary definitions. This avoids another runtime/tooling dependency and makes every random decision explicit, but provides less name variety than Faker. Numeric suffixes guarantee unique fictional emails even when names repeat. Faker becomes worthwhile if later demonstrations need richer locale-aware identities, provided its version and seed remain pinned.
+
+## Replace application data instead of upserting seed rows
+
+`pnpm db:seed` deletes salary and employee rows and recreates the complete dataset in one transaction. This makes reruns simple, deterministic, and free from stale records, while batched `createMany` calls avoid one query per row. The command is intentionally destructive to application data and is appropriate only for the assessment/development database; a production-like environment would need explicit safeguards or a scoped import strategy.

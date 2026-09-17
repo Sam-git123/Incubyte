@@ -148,3 +148,25 @@ Accepted behavior includes a 100-character trimmed search, uppercase two-letter 
 - RED filters: 7 expected failures before country and department predicates existed.
 - RED sorting: 6 expected failures before allow-listed database ordering existed.
 - Each capability passed its focused integration suite before the next was started; the complete workspace quality gate was run after refactoring and documentation updates.
+
+## 2026-09-17 — Phase 6 deterministic employee seed
+
+### Task
+
+Create an idempotent deterministic seed of exactly 10,000 employees with realistic synthetic international compensation data, salary history, verification, and measured performance.
+
+### AI contribution
+
+The AI agent designed and implemented a pure seeded generator, centralized weighted country and department definitions, department-specific job families, illustrative country/level salary bands, deterministic dates and identifiers, batched transactional persistence, and post-seed invariants. It first encoded generator rules as focused failing tests, then added a small-database idempotency integration test and verified the full dataset through the existing API.
+
+### Engineering review
+
+A local seeded PRNG was accepted instead of Faker so the data model and randomness remain explicit without a new dependency. One undifferentiated salary range, random currencies, real-person email domains, uncontrolled timestamps, per-record database writes, and a 10,000-row test on every normal assertion were rejected. Salary values reuse the domain validator and are synthetic—not factual market data. Clearing application employee/salary data was accepted as the simplest idempotency strategy for this development database and documented as destructive.
+
+### Verification
+
+- RED: the six generator specifications failed because the generator module did not exist.
+- GREEN: six pure generator tests and one migrated-database integration test passed.
+- The real seed ran twice with identical counts: 10,000 employees and 14,064 salary records, with no employee missing salary.
+- The full dataset passed default-page, pagination, search, country filter, department filter, and sorting checks through `app.inject()`.
+- The complete workspace test, typecheck, lint, and build gates were run after documentation and refactoring.

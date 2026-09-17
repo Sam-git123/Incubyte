@@ -19,6 +19,7 @@
     "db:migrate": "corepack pnpm --filter @acme/api db:migrate",
     "db:migrate:deploy": "corepack pnpm --filter @acme/api db:migrate:deploy",
     "db:reset": "corepack pnpm --filter @acme/api db:reset",
+    "db:seed": "corepack pnpm --filter @acme/api db:seed",
     "dev": "concurrently --kill-others-on-fail --names api,web --prefix-colors blue,magenta \"corepack pnpm --filter @acme/api dev\" \"corepack pnpm --filter @acme/web dev\"",
     "format": "prettier --write .",
     "lint": "eslint . && prettier --check .",

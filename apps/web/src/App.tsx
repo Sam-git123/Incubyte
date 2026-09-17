@@ -9,9 +9,11 @@ import {
   Toolbar,
   Typography,
 } from '@mui/material';
+import { Link as RouterLink, Navigate, Route, Routes } from 'react-router-dom';
 
 import { appTheme } from './app/theme';
 import { EmployeeDirectory } from './features/employees/components/EmployeeDirectory';
+import { EmployeeDetails } from './features/employees/components/EmployeeDetails';
 
 export function App() {
   return (
@@ -74,7 +76,12 @@ export function App() {
               Workspace
             </Typography>
             <List disablePadding sx={{ mt: 1 }}>
-              <ListItemButton selected sx={{ borderRadius: 1.5 }}>
+              <ListItemButton
+                component={RouterLink}
+                selected
+                sx={{ borderRadius: 1.5 }}
+                to="/employees"
+              >
                 <ListItemText
                   primary="Employees"
                   slotProps={{ primary: { sx: { fontWeight: 700 } } }}
@@ -92,7 +99,14 @@ export function App() {
               py: { xs: 3, sm: 4 },
             }}
           >
-            <EmployeeDirectory />
+            <Routes>
+              <Route path="/" element={<Navigate replace to="/employees" />} />
+              <Route path="/employees" element={<EmployeeDirectory />} />
+              <Route
+                path="/employees/:employeeId"
+                element={<EmployeeDetails />}
+              />
+            </Routes>
           </Box>
         </Box>
       </Box>

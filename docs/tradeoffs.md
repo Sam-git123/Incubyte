@@ -28,6 +28,12 @@ MUI DataGrid Community aligns with the Material UI stack and supplies accessible
 
 TanStack Query owns request lifecycle, caching, retry, and refetch behavior, while search, filter, sort, and pagination controls remain local to the directory. This keeps the first screen small and avoids a routing dependency, but filters are not currently shareable through bookmarked URLs or browser history. URL-backed state should be reconsidered when deep links or navigation restoration become product requirements.
 
+Phase 8 adds React Router for stable `/employees` and `/employees/:employeeId` URLs while deliberately leaving directory controls out of the URL. Returning from a detail view benefits from cached server data, but resets local search and filter controls. Persisting those controls should be added only when shareable or restorable directory views become a concrete requirement.
+
+## Opaque employee IDs return not found
+
+Employee detail routes use the internal string ID as the resource identifier and do not enforce CUID syntax at the HTTP boundary. Seeded IDs and database-generated IDs are both opaque implementation values, so format validation would add coupling without useful product behavior. Any unknown string therefore returns the same safe `EMPLOYEE_NOT_FOUND` 404 response; stricter validation can be introduced if the identifier contract becomes externally standardized.
+
 ## Development proxy and environment-based API path
 
 Vite proxies `/api` to the Fastify process during local development, avoiding a broad backend CORS policy. The client reads `VITE_API_BASE_URL` for deployment, with `/api` as the same-origin default. A deployment on separate browser-visible origins will require an explicit trusted-origin CORS policy or, preferably, a gateway/reverse proxy; permissive CORS was not added speculatively.

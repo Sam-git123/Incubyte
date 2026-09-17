@@ -14,6 +14,7 @@ import {
   type GridPaginationModel,
   type GridSortModel,
 } from '@mui/x-data-grid';
+import { Link as RouterLink } from 'react-router-dom';
 
 import { getCountryLabel } from '../employee-options';
 import { formatSalary } from '../utils/salary-format';
@@ -47,7 +48,16 @@ const columns: GridColDef<EmployeeListItem>[] = [
           justifyContent: 'center',
         }}
       >
-        <Typography sx={{ fontWeight: 700 }} variant="body2">
+        <Typography
+          component={RouterLink}
+          sx={{
+            color: 'primary.main',
+            fontWeight: 700,
+            textDecoration: 'none',
+          }}
+          to={`/employees/${parameters.row.id}`}
+          variant="body2"
+        >
           {parameters.row.firstName} {parameters.row.lastName}
         </Typography>
         <Typography color="text.secondary" variant="caption">

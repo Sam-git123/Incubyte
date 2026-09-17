@@ -2,6 +2,7 @@ import type { EmployeeListResponse } from '@acme/contracts';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { getEmployees } from '../api/employees-api';
@@ -170,9 +171,21 @@ describe('EmployeeDirectory', () => {
       ),
     );
   });
+
+  it('opens the selected employee details route from the employee name', async () => {
+    const user = userEvent.setup();
+    mockedGetEmployees.mockResolvedValue(employeeResponse());
+    renderDirectory(true);
+
+    await user.click(await screen.findByRole('link', { name: 'Ava Patel' }));
+
+    expect(
+      screen.getByRole('heading', { name: 'Employee details route' }),
+    ).toBeInTheDocument();
+  });
 });
 
-function renderDirectory() {
+function renderDirectory(withDetailsRoute = false) {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -184,7 +197,17 @@ function renderDirectory() {
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <EmployeeDirectory />
+      <MemoryRouter initialEntries={['/employees']}>
+        <Routes>
+          <Route path="/employees" element={<EmployeeDirectory />} />
+          {withDetailsRoute ? (
+            <Route
+              path="/employees/:employeeId"
+              element={<h2>Employee details route</h2>}
+            />
+          ) : null}
+        </Routes>
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 }

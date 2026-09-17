@@ -1,6 +1,6 @@
 # Proposed Architecture
 
-> Status: Phase 7 employee directory implemented. The React application now consumes the employee query API with server-driven search, filtering, sorting, and pagination over the deterministic 10,000-employee dataset.
+> Status: Phase 8 employee details implemented. The application supports directory-to-detail navigation, a dedicated employee resource API, current compensation, and complete effective-dated salary history.
 
 ## Overview
 
@@ -19,10 +19,10 @@ The browser will request only the employee page or analytics result it needs. Fi
 
 ## Proposed application structure
 
-- `apps/web`: React, Vite, TypeScript, Material UI, MUI DataGrid, and TanStack Query. The implemented employee feature owns its API adapter, server-state hook, filters, table, and display formatting; later salary forms may introduce React Hook Form when needed.
+- `apps/web`: React, Vite, TypeScript, React Router, Material UI, MUI DataGrid, and TanStack Query. The employee feature owns its list/detail API adapters, server-state hooks, directory, detail view, and display formatting; later salary forms may introduce React Hook Form when needed.
 - `apps/api`: Fastify and TypeScript, with the salary domain kept separate from the Prisma client boundary. The employee route validates HTTP input, the service coordinates listing and response mapping, and the repository owns bounded database queries.
 - `apps/api/src/seed`: pure deterministic employee/salary generation, batched database insertion, and the executable seed entry point. Runtime API modules do not depend on seed code.
-- `packages/contracts`: shared Zod schemas and TypeScript request/response contracts for employee-list transport data. It does not contain business logic.
+- `packages/contracts`: shared Zod schemas and TypeScript request/response contracts for employee list and detail transport data. It does not contain business logic.
 - `apps/api/prisma`: the SQLite schema and versioned migrations. Generated Prisma Client code is reproducible through `pnpm db:generate` and excluded from version control. Deterministic bulk seeding is available through `pnpm db:seed`.
 
 MUI DataGrid Community is the implemented directory table because its server modes, pagination controls, accessible grid semantics, and Material UI integration cover the current requirements without paid features.
@@ -50,10 +50,11 @@ Job titles come from department-specific weighted families. Synthetic annual sal
 3. A feature service applies business rules and asks its data-access code for bounded queries or database aggregations.
 4. Prisma applies the same database `where` conditions to the filtered count and page queries, then orders before applying offset pagination. Search trims input and ANDs whitespace-delimited terms; each term may match first name, last name, or employee code through SQLite's case-insensitive ASCII `LIKE` behavior. Country codes are uppercased and matched exactly, while trimmed departments retain exact casing.
 5. The page query includes at most one currently effective salary per employee, avoiding per-employee salary queries and unnecessary history in the response.
-6. The API returns typed success data or a predictable error envelope without stack traces.
-7. TanStack Query keys cached employee pages by the complete validated query. The Vite development server proxies `/api` to the local API; `VITE_API_BASE_URL` can select the deployed same-origin API path or gateway.
+6. `GET /api/employees/:employeeId` retrieves one employee and its ordered salary records in one relation query. The service maps persistence dates to transport strings and selects the first record effective at or before the request's controlled `asOf` time.
+7. The API returns typed success data or a predictable error envelope without stack traces. Unknown opaque employee IDs return `EMPLOYEE_NOT_FOUND` with HTTP 404.
+8. TanStack Query keys cached employee pages by the complete list query and detail records by `['employee', employeeId]`. The Vite development server proxies `/api` to the local API; `VITE_API_BASE_URL` can select the deployed same-origin API path or gateway.
 
-The implemented API surface is currently `GET /api/employees` plus the bootstrap health route. Employee detail, salary mutation, and analytics endpoints remain proposed and will be refined incrementally.
+The implemented API surface is currently `GET /api/employees`, `GET /api/employees/:employeeId`, and the bootstrap health route. Salary mutation and analytics endpoints remain future work.
 
 ## Quality and operational boundaries
 

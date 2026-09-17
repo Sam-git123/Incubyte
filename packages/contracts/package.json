@@ -5,7 +5,7 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./src/index.ts",
       "default": "./dist/index.js"
     }
   },
@@ -13,5 +13,7 @@
     "build": "tsc --project tsconfig.build.json",
     "typecheck": "tsc --project tsconfig.json"
   },
-  "devDependencies": {}
+  "dependencies": {
+    "zod": "^4.6.5"
+  }
 }

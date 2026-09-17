@@ -42,6 +42,8 @@ Integer minor units prevent ordinary binary floating-point errors and make the A
 
 Ten thousand records could sometimes fit in browser memory, but transferring and processing the entire data set increases payloads, weakens query consistency, and scales poorly. Bounded server queries also mirror a realistic production design. Client-side processing may still be appropriate for an already loaded small result set, but not for the primary directory or organization-wide analytics.
 
+The first listing endpoint uses simple `page`/`pageSize` offset pagination, capped at 100 rows, with `employeeCode ASC` as its fixed stable order. This produces understandable metadata and predictable page boundaries for the assessment. Cursor pagination should be reconsidered if deep-page performance or frequent concurrent inserts become material; configurable ordering is deliberately deferred until its supported fields are specified.
+
 ## Currency-separated analytics instead of automatic conversion
 
 Adding unlike currencies creates misleading results. Initial metrics will therefore be grouped by currency, and country views must still preserve currency meaning. Cross-currency reporting can be added only with an agreed base currency, rate source, effective date, and rounding policy; live FX integration is deliberately absent.

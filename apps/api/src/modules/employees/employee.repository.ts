@@ -11,6 +11,20 @@ export type CreateEmployeeInput = {
   jobTitle: string;
 };
 
+export type EmployeeListRecord = CreateEmployeeInput & {
+  id: string;
+  currentSalary: {
+    amountMinor: number;
+    currency: string;
+    effectiveFrom: Date;
+  } | null;
+};
+
+export type EmployeePage = {
+  employees: EmployeeListRecord[];
+  total: number;
+};
+
 export class EmployeeRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
@@ -38,5 +52,52 @@ export class EmployeeRepository {
       where: { employeeId },
       orderBy: { effectiveFrom: 'desc' },
     });
+  }
+
+  async listPage(
+    offset: number,
+    limit: number,
+    asOf: Date,
+  ): Promise<EmployeePage> {
+    const [total, employees] = await this.prisma.$transaction([
+      this.prisma.employee.count(),
+      this.prisma.employee.findMany({
+        skip: offset,
+        take: limit,
+        orderBy: { employeeCode: 'asc' },
+        select: {
+          id: true,
+          employeeCode: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          countryCode: true,
+          department: true,
+          jobTitle: true,
+          salaryRecords: {
+            where: { effectiveFrom: { lte: asOf } },
+            orderBy: [
+              { effectiveFrom: 'desc' },
+              { createdAt: 'desc' },
+              { id: 'desc' },
+            ],
+            take: 1,
+            select: {
+              amountMinor: true,
+              currency: true,
+              effectiveFrom: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    return {
+      total,
+      employees: employees.map(({ salaryRecords, ...employee }) => ({
+        ...employee,
+        currentSalary: salaryRecords[0] ?? null,
+      })),
+    };
   }
 }

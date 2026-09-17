@@ -107,3 +107,23 @@ The design deliberately excludes service logic, current-salary selection, seed d
 - Repository tests start from an ignored test database rebuilt from committed migrations and clear records between cases.
 - Prisma Client generation and a clean migration apply succeeded.
 - The focused persistence suite and the complete workspace quality gates passed.
+
+## 2026-09-17 — Phase 4 employee listing API
+
+### Task
+
+Implement the first application endpoint, `GET /api/employees`, through red-green-refactor TDD with validated server-side pagination, stable ordering, and currently effective salary data.
+
+### AI contribution
+
+The AI agent translated the pagination and salary-selection requirements into deterministic Fastify integration tests before adding production behavior. It then introduced shared Zod transport contracts and a small route-service-repository flow, including an injected request-time source and explicit persistence-to-API mapping.
+
+### Engineering review
+
+The engineer-requested defaults, limits, empty-page behavior, and `employeeCode ASC` order were kept explicit. Current salary is selected at the database boundary as the latest record effective at or before one controlled `asOf` time, with only that record returned for each employee. A generic clock framework, N+1 salary lookups, client-side pagination, configurable sorting, search, filtering, and response exposure of Prisma records were deliberately rejected or deferred.
+
+### Verification
+
+- RED: all 17 focused API cases failed with `404` because the route did not exist.
+- GREEN: the focused suite passed after the minimum endpoint implementation.
+- The complete workspace test, typecheck, lint, and build gates were run after refactoring and documentation updates.

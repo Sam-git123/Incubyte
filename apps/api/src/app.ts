@@ -25,6 +25,7 @@ export function buildApp(
   const now = dependencies.now ?? (() => new Date());
   let employeeService: EmployeeService | undefined;
   let salaryService: SalaryService | undefined;
+  let analyticsService: AnalyticsService | undefined;
 
   const getEmployeeService = () => {
     employeeService ??= new EmployeeService(
@@ -42,9 +43,18 @@ export function buildApp(
     return salaryService;
   };
 
+  const getAnalyticsService = () => {
+    analyticsService ??= new AnalyticsService(
+      new AnalyticsRepository(dependencies.prisma ?? getPrismaClient()),
+    );
+
+    return analyticsService;
+  };
+
   app.get('/health', async () => ({ status: 'ok' }));
   app.register(employeeRoutes, { getEmployeeService, now });
   app.register(salaryRoutes, { getSalaryService });
+  app.register(analyticsRoutes, { getAnalyticsService, now });
 
   app.setErrorHandler((error, request, reply) => {
     request.log.error(error);

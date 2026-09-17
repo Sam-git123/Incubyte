@@ -76,6 +76,14 @@ Salary sorting is not in the allowlist. Correctly ordering before pagination req
 
 Adding unlike currencies creates misleading results. Initial metrics will therefore be grouped by currency, and country views must still preserve currency meaning. Cross-currency reporting can be added only with an agreed base currency, rate source, effective date, and rounding policy; live FX integration is deliberately absent.
 
+## Prisma projection with application-side statistics
+
+Phase 10 uses one focused Prisma employee query per analytics request. Database predicates apply country/department filters and each relation projection contains at most the latest salary effective at the request's controlled time. The result includes only country, department, amount, and currency—not employee profiles or salary history—so the application can calculate median and grouped metrics without N+1 queries.
+
+Median and grouping remain in small TypeScript helpers because SQLite has no simple portable median aggregate and 10,000 minimal rows performed comfortably in measured local requests. Targeted parameterized SQL was considered but rejected for now: it would add adapter-specific date/result handling without a demonstrated correctness or performance benefit. This should be revisited if measured volume or latency grows materially.
+
+Averages and even-sized medians are rounded to the nearest minor unit with `Math.round`; positive half-unit results round upward. Headcount is dimensionless and may span currencies, but every monetary metric remains inside a currency group. Country responses also retain `compensationByCurrency` rather than assuming one currency per country.
+
 ## Shared validation contracts, limited to transport concerns
 
 Sharing Zod schemas and TypeScript API types can keep the React client and Fastify API aligned. Keeping business logic out of the contracts package avoids coupling domain behavior to transport types. Sharing should remain selective: duplication is preferable when a shared abstraction would blur distinct frontend and backend responsibilities.

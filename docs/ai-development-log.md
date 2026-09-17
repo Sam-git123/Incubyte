@@ -231,3 +231,24 @@ Appending a new effective-dated record was accepted; overwriting the current sal
 - RED backend: salary creation, validation, timing, history, currency, not-found, and conflict cases failed against the missing route.
 - RED frontend: conversion/dialog modules and the details-page entry point were absent.
 - GREEN: focused Fastify, form, mutation, details, and conversion suites passed before the full workspace quality gates, clean migration/seed check, and seeded manual API workflow.
+
+## 2026-09-18 — Phase 10 compensation analytics
+
+### Task
+
+Add summary, department, and country analytics APIs that use currently effective salaries and remain correct across currencies, salary history, future records, missing salaries, and filters.
+
+### AI contribution
+
+The AI agent translated the product rules into deterministic API and median tests, identified mixed-currency aggregation as the primary correctness risk, and proposed both targeted raw SQL and minimal Prisma projection strategies. It implemented shared transport contracts, grouped statistics, controlled-time salary selection, manual seeded checks, and repeatable local measurements.
+
+### Engineering review
+
+Mixed-currency totals and averages were explicitly rejected. One Prisma query returning employee dimensions plus at most one current salary was accepted because it avoids N+1 behavior and measured comfortably at 10,000 employees. Application-side median was preferred over clever SQLite SQL; it keeps the rule testable and only processes required numeric rows. Average and median round to the nearest minor unit. No cache, new index, raw SQL, FX conversion, or dashboard code was added.
+
+### Verification
+
+- RED summary: ten API cases returned 404 and the median helper import was absent.
+- RED grouped analytics: five department and five country cases returned 404 before handlers existed.
+- GREEN: focused suites cover summary metrics, multiple currencies, history/future semantics, missing salaries, filters, deterministic ordering, grouped endpoints, validation, and median edge cases.
+- The deterministic seed, full workspace quality gate, live seeded requests, and measured endpoint timings verified correctness and assessment-scale behavior.

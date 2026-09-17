@@ -35,13 +35,13 @@ const searchQueryParameterSchema = z
   .max(100)
   .transform((search) => search || undefined);
 
-const countryQueryParameterSchema = z
+export const countryFilterSchema = z
   .string()
   .trim()
   .transform((country) => country.toUpperCase())
   .pipe(z.string().regex(/^[A-Z]{2}$/));
 
-const departmentQueryParameterSchema = z.string().trim().min(1).max(100);
+export const departmentFilterSchema = z.string().trim().min(1).max(100);
 
 export const employeeSortFieldSchema = z.enum([
   'employeeCode',
@@ -66,8 +66,8 @@ export const employeeListQuerySchema = z
       .pipe(z.number().int().safe().min(1).max(100))
       .default(25),
     search: searchQueryParameterSchema.optional(),
-    country: countryQueryParameterSchema.optional(),
-    department: departmentQueryParameterSchema.optional(),
+    country: countryFilterSchema.optional(),
+    department: departmentFilterSchema.optional(),
     sortBy: employeeSortFieldSchema.optional(),
     sortOrder: sortOrderSchema.optional(),
   })
@@ -169,6 +169,92 @@ export const createSalaryResponseSchema = z
   .strict();
 
 export type CreateSalaryResponse = z.infer<typeof createSalaryResponseSchema>;
+
+export const analyticsFiltersSchema = z
+  .object({
+    country: countryFilterSchema.optional(),
+    department: departmentFilterSchema.optional(),
+  })
+  .strict();
+
+export type AnalyticsFilters = z.infer<typeof analyticsFiltersSchema>;
+
+export const compensationMetricSchema = z
+  .object({
+    currency: z.string().regex(/^[A-Z]{3}$/),
+    employeeCount: z.number().int().positive(),
+    averageSalaryMinor: z.number().int().positive(),
+    medianSalaryMinor: z.number().int().positive(),
+    minSalaryMinor: z.number().int().positive(),
+    maxSalaryMinor: z.number().int().positive(),
+  })
+  .strict();
+
+export type CompensationMetric = z.infer<typeof compensationMetricSchema>;
+
+export const compensationSummaryResponseSchema = z
+  .object({
+    headcount: z.number().int().nonnegative(),
+    employeesWithSalary: z.number().int().nonnegative(),
+    employeesWithoutSalary: z.number().int().nonnegative(),
+    compensationByCurrency: z.array(compensationMetricSchema),
+  })
+  .strict();
+
+export type CompensationSummaryResponse = z.infer<
+  typeof compensationSummaryResponseSchema
+>;
+
+export const departmentAnalyticsQuerySchema = z
+  .object({ country: countryFilterSchema.optional() })
+  .strict();
+
+export type DepartmentAnalyticsQuery = z.infer<
+  typeof departmentAnalyticsQuerySchema
+>;
+
+export const countryAnalyticsQuerySchema = z
+  .object({ department: departmentFilterSchema.optional() })
+  .strict();
+
+export type CountryAnalyticsQuery = z.infer<typeof countryAnalyticsQuerySchema>;
+
+const analyticsGroupPopulationSchema = z.object({
+  headcount: z.number().int().nonnegative(),
+  employeesWithSalary: z.number().int().nonnegative(),
+  employeesWithoutSalary: z.number().int().nonnegative(),
+  compensationByCurrency: z.array(compensationMetricSchema),
+});
+
+export const departmentAnalyticsItemSchema = analyticsGroupPopulationSchema
+  .extend({ department: z.string() })
+  .strict();
+
+export type DepartmentAnalyticsItem = z.infer<
+  typeof departmentAnalyticsItemSchema
+>;
+
+export const departmentAnalyticsResponseSchema = z
+  .object({ data: z.array(departmentAnalyticsItemSchema) })
+  .strict();
+
+export type DepartmentAnalyticsResponse = z.infer<
+  typeof departmentAnalyticsResponseSchema
+>;
+
+export const countryAnalyticsItemSchema = analyticsGroupPopulationSchema
+  .extend({ countryCode: z.string() })
+  .strict();
+
+export type CountryAnalyticsItem = z.infer<typeof countryAnalyticsItemSchema>;
+
+export const countryAnalyticsResponseSchema = z
+  .object({ data: z.array(countryAnalyticsItemSchema) })
+  .strict();
+
+export type CountryAnalyticsResponse = z.infer<
+  typeof countryAnalyticsResponseSchema
+>;
 
 export const apiErrorResponseSchema = z
   .object({

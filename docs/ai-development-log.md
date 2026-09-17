@@ -190,3 +190,24 @@ MUI DataGrid Community and TanStack Query were accepted because their current fe
 - RED: the focused directory suite failed because the employee-directory implementation did not exist.
 - GREEN: component tests cover data, loading, retry, empty states, debounced search, filters, pagination, and sorting; API-adapter tests cover exact query serialization and safe failure behavior.
 - The implementation was checked against the seeded local API, followed by the full workspace test, typecheck, lint, and build gates.
+
+## 2026-09-17 — Phase 8 employee details
+
+### Task
+
+Add a dedicated employee details API and React view for employee information, current salary, and ordered salary history without introducing salary mutation.
+
+### AI contribution
+
+The AI agent defined the shared detail contract, wrote failing Fastify and React behavior tests, and implemented the route-service-repository path, React Router navigation, dedicated TanStack Query key, detail states, and salary-history presentation. It also reviewed current-salary behavior against the listing implementation and centralized the shared Prisma salary ordering.
+
+### Engineering review
+
+Internal employee IDs remain opaque: unknown or malformed-looking strings receive the same safe 404 instead of a speculative CUID validator. One relation query returns the employee and necessary salary history; no per-record queries or raw Prisma values reach HTTP. A compact semantic table was accepted for history, with future records visibly marked as scheduled. URL-persisted directory filters, generalized error frameworks, salary editing, and extra routes were rejected or deferred.
+
+### Verification
+
+- RED backend: six endpoint cases received Fastify's default 404 before route implementation.
+- RED frontend: the details modules were absent and employee names were not navigation links.
+- GREEN: focused API and frontend suites cover the detail contract, salary timing and ordering, navigation, rendering, loading, retry, not-found, no-salary, and dedicated resource request.
+- The seeded application workflow and complete workspace quality gates were checked after refactoring.

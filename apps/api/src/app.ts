@@ -2,6 +2,9 @@ import Fastify, { type FastifyServerOptions } from 'fastify';
 
 import { getPrismaClient } from './db/prisma.js';
 import type { PrismaClient } from './generated/prisma/client.js';
+import { AnalyticsRepository } from './modules/analytics/analytics.repository.js';
+import { analyticsRoutes } from './modules/analytics/analytics.routes.js';
+import { AnalyticsService } from './modules/analytics/analytics.service.js';
 import { EmployeeRepository } from './modules/employees/employee.repository.js';
 import { employeeRoutes } from './modules/employees/employee.routes.js';
 import { EmployeeService } from './modules/employees/employee.service.js';

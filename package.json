@@ -24,10 +24,13 @@
     "format": "prettier --write .",
     "lint": "eslint . && prettier --check .",
     "test": "corepack pnpm --recursive --if-present run test",
-    "typecheck": "corepack pnpm --recursive --if-present run typecheck"
+    "test:e2e": "corepack pnpm run test:e2e:prepare && playwright test",
+    "test:e2e:prepare": "corepack pnpm --filter @acme/contracts build && cross-env DATABASE_URL=file:./e2e.db corepack pnpm --filter @acme/api db:reset && cross-env DATABASE_URL=file:./e2e.db tsx e2e/seed-database.ts",
+    "typecheck": "corepack pnpm --recursive --if-present run typecheck && tsc --project e2e/tsconfig.json"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.63.0",
     "@types/node": "^22.20.3",
     "concurrently": "^10.0.5",
     "cross-env": "^10.1.0",

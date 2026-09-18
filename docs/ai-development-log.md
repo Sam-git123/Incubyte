@@ -293,3 +293,23 @@ Tests continue to mock API boundaries while exercising the real router, TanStack
 - Salary mutation coverage verifies that successful invalidation produces refreshed current salary and history in the rendered page.
 - The full workspace test, typecheck, lint, and build gates were run after the test refactor and documentation update.
 - Coverage percentages were not reported because code-coverage instrumentation is not configured in the workspace.
+
+## 2026-09-18 — Phase 13 end-to-end tests
+
+### Task
+
+Add a small Playwright suite that exercises the highest-value browser-to-database journeys without duplicating detailed unit and API coverage.
+
+### AI contribution
+
+The AI agent selected employee search/navigation, salary change persistence, and dashboard filtering as the three full-system scenarios. It added Playwright-managed application startup, a dedicated migrated SQLite database, a focused deterministic seed, semantic selectors, and failure-only screenshots and traces.
+
+### Engineering review
+
+The E2E database uses the existing schema, migrations, seed generator, and persistence code but limits the fixture to 501 employees for faster repeatable runs. Tests run serially because salary mutation shares one SQLite database; separate deterministic employees keep workflows independent. Arbitrary sleeps, network mocks, page-object hierarchies, browser matrices, retries, and duplicated backend edge cases were deliberately rejected.
+
+### Verification
+
+- The E2E suite was run successfully three consecutive times from a clean database reset.
+- The full unit/integration test, typecheck, lint, and build gates passed.
+- Browser installation and the single-command E2E workflow are documented in the README.

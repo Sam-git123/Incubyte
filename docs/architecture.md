@@ -1,6 +1,6 @@
 # Proposed Architecture
 
-> Status: Phase 10 compensation analytics implemented. The application now exposes currency-safe summary, department, and country analytics APIs alongside the employee and salary workflows; the analytics dashboard has not started.
+> Status: Phase 11 compensation dashboard implemented. The React application now presents currency-safe summary, department, and country insights over the Phase 10 analytics APIs alongside the employee and salary workflows.
 
 ## Overview
 
@@ -19,10 +19,10 @@ The browser will request only the employee page or analytics result it needs. Fi
 
 ## Proposed application structure
 
-- `apps/web`: React, Vite, TypeScript, React Router, Material UI, MUI DataGrid, TanStack Query, React Hook Form, and Zod. Employee features own list/detail retrieval while the salary feature owns mutation, form, and exact major/minor conversion concerns.
+- `apps/web`: React, Vite, TypeScript, React Router, Material UI, MUI DataGrid, TanStack Query, React Hook Form, and Zod. Employee features own list/detail retrieval, the salary feature owns mutation and exact major/minor conversion, and the analytics feature owns dashboard requests and presentation without recalculating server metrics.
 - `apps/api`: Fastify and TypeScript, with employee, salary, and analytics modules separated by feature. Analytics routes validate filters, the service computes population/group metrics, and the repository retrieves only employee dimensions plus one currently effective salary per employee.
 - `apps/api/src/seed`: pure deterministic employee/salary generation, batched database insertion, and the executable seed entry point. Runtime API modules do not depend on seed code.
-- `packages/contracts`: shared Zod schemas and TypeScript request/response contracts for employee list, detail, and salary creation transport data. Shared supported-currency and country/currency values keep both application sides aligned without moving salary validation into this package.
+- `packages/contracts`: shared Zod schemas and TypeScript request/response contracts for employee, salary, and analytics transport data. Shared supported-currency and country/currency values keep both application sides aligned without moving business calculations into this package.
 - `apps/api/prisma`: the SQLite schema and versioned migrations. Generated Prisma Client code is reproducible through `pnpm db:generate` and excluded from version control. Deterministic bulk seeding is available through `pnpm db:seed`.
 
 MUI DataGrid Community is the implemented directory table because its server modes, pagination controls, accessible grid semantics, and Material UI integration cover the current requirements without paid features.
@@ -56,12 +56,13 @@ Job titles come from department-specific weighted families. Synthetic annual sal
 9. `POST /api/employees/:employeeId/salaries` validates the transport shape, delegates amount/currency rules to the salary domain, enforces the employee's established currency (or configured country currency for first salary), checks duplicate dates, and inserts one record. Effective dates are interpreted as the start of the supplied calendar date in UTC.
 10. The details-page dialog accepts human-readable major units, converts the decimal string to integer minor units without floating-point multiplication, and disables submission while pending. Success invalidates both the employee detail and employee-list query families so current salary and history are refetched.
 11. Analytics uses one Prisma employee query with database filters and a bounded relation projection containing at most the latest salary effective at the request-scoped `asOf` time. The service groups those minimal current-salary rows by currency and, where requested, department or country; historical and future records never enter calculations.
+12. The dashboard starts three independent TanStack Query requests in parallel. Stable keys include only filters supported by each endpoint: summary uses country and department, department analytics uses country, and country analytics uses department. The React layer formats and visualizes returned data but does not recompute compensation statistics.
 
-The implemented API surface includes `GET /api/employees`, `GET /api/employees/:employeeId`, `POST /api/employees/:employeeId/salaries`, `GET /api/analytics/summary`, `GET /api/analytics/departments`, `GET /api/analytics/countries`, and the bootstrap health route. Analytics UI remains future work.
+The implemented API surface includes `GET /api/employees`, `GET /api/employees/:employeeId`, `POST /api/employees/:employeeId/salaries`, `GET /api/analytics/summary`, `GET /api/analytics/departments`, `GET /api/analytics/countries`, and the bootstrap health route. The browser exposes `/dashboard`, `/employees`, and `/employees/:employeeId`, with `/` redirecting to the dashboard.
 
 ## Quality and operational boundaries
 
-- Business behaviour follows red-green-refactor TDD, with Fastify integration tests and focused React Testing Library tests. Browser automation beyond the requested manual Phase 7 check remains future work.
+- Business behaviour follows red-green-refactor TDD, with Fastify integration tests and focused React Testing Library tests. Phase 11 adds manual seeded-data and responsive browser checks; automated end-to-end coverage remains future work.
 - Employee listing uses bounded server-side offset pagination. Its allowlist supports employee code, first name, last name, department, and country, defaulting to `employeeCode ASC`; non-unique fields use `employeeCode ASC` as a stable secondary order.
 - Salary sorting is deliberately rejected: correct ordering would require a specialized query over each employee's current effective record, and raw minor-unit comparisons across currencies would be misleading.
 - Existing unique employee-code and country/department indexes support exact directory queries. No name index was added because the current contains search is not expected to benefit from a normal B-tree index.

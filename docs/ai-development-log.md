@@ -252,3 +252,23 @@ Mixed-currency totals and averages were explicitly rejected. One Prisma query re
 - RED grouped analytics: five department and five country cases returned 404 before handlers existed.
 - GREEN: focused suites cover summary metrics, multiple currencies, history/future semantics, missing salaries, filters, deterministic ordering, grouped endpoints, validation, and median edge cases.
 - The deterministic seed, full workspace quality gate, live seeded requests, and measured endpoint timings verified correctness and assessment-scale behavior.
+
+## 2026-09-18 — Phase 11 compensation dashboard
+
+### Task
+
+Build a responsive dashboard over the existing analytics APIs with summary counts, currency-aware compensation, country and department analysis, filters, and complete loading, error, and empty states.
+
+### AI contribution
+
+The AI agent translated the dashboard requirements into failing React behavior tests, explored table and chart layouts, implemented endpoint-specific TanStack Query hooks, and assembled a restrained Material UI information hierarchy. It also checked filter propagation, mixed-currency presentation, accessible chart labeling, responsive layout, and seeded API consistency.
+
+### Engineering review
+
+A proposed global salary headline was rejected because the unfiltered organization contains eight currencies. Separate currency cards, department headcount bars, and a country table were accepted; department salary comparison appears only in a single-currency view. A chart package was not added for one simple bar visualization, and compensation calculations remain exclusively on the backend. Local filter state and one coherent dashboard error were kept deliberately simple.
+
+### Verification
+
+- RED: the focused dashboard suite failed on missing analytics frontend modules, and the application-shell test failed while `/` still opened Employees.
+- GREEN: focused tests cover summary counts, separate currency groups, endpoint-specific filters, clearing, loading, failure, empty results, department data, country currency labels, and dashboard-first routing.
+- The full workspace test, typecheck, lint, and build gates and seeded browser/API checks were completed after refactoring.

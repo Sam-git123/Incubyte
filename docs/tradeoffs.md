@@ -84,6 +84,14 @@ Median and grouping remain in small TypeScript helpers because SQLite has no sim
 
 Averages and even-sized medians are rounded to the nearest minor unit with `Math.round`; positive half-unit results round upward. Headcount is dimensionless and may span currencies, but every monetary metric remains inside a currency group. Country responses also retain `compensationByCurrency` rather than assuming one currency per country.
 
+## Focused dashboard instead of a general analytics workspace
+
+The Phase 11 dashboard presents three organization counts, currency-separated salary cards, department headcount bars, and a country table. It deliberately omits a global average, median, or payroll total because those values would combine unrelated currencies. Department salary context appears only when the current result contains exactly one currency; otherwise the department visualization remains headcount-only.
+
+The department chart uses responsive CSS bars with exact text values and an accessible summary rather than adding a chart dependency for one simple comparison. This reduces bundle and testing surface while keeping the data understandable without color or SVG inspection. A chart library should be reconsidered only if richer interactions or several genuinely visual analyses are introduced.
+
+Dashboard filters remain local UI state. Three endpoint-specific TanStack Query keys let independent requests run in parallel and reuse the application's 30-second default cache. The page uses a unified error state because all three sections form one coherent analytical snapshot; section-level recovery can replace it if partial availability becomes a product priority. Loading removes old results instead of presenting a stale combination under newly selected filters.
+
 ## Shared validation contracts, limited to transport concerns
 
 Sharing Zod schemas and TypeScript API types can keep the React client and Fastify API aligned. Keeping business logic out of the contracts package avoids coupling domain behavior to transport types. Sharing should remain selective: duplication is preferable when a shared abstraction would blur distinct frontend and backend responsibilities.

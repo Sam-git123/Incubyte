@@ -1,6 +1,7 @@
 import {
   AppBar,
   Box,
+  Button,
   CssBaseline,
   List,
   ListItemButton,
@@ -9,13 +10,34 @@ import {
   Toolbar,
   Typography,
 } from '@mui/material';
-import { Link as RouterLink, Navigate, Route, Routes } from 'react-router-dom';
+import {
+  Link as RouterLink,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+} from 'react-router-dom';
 
 import { appTheme } from './app/theme';
+import { DashboardPage } from './features/analytics/pages/DashboardPage';
 import { EmployeeDirectory } from './features/employees/components/EmployeeDirectory';
 import { EmployeeDetails } from './features/employees/components/EmployeeDetails';
 
 export function App() {
+  const location = useLocation();
+  const navigation = [
+    {
+      label: 'Dashboard',
+      to: '/dashboard',
+      selected: location.pathname === '/dashboard',
+    },
+    {
+      label: 'Employees',
+      to: '/employees',
+      selected: location.pathname.startsWith('/employees'),
+    },
+  ];
+
   return (
     <ThemeProvider theme={appTheme}>
       <CssBaseline />
@@ -50,6 +72,30 @@ export function App() {
                 People Operations
               </Typography>
             </Box>
+            <Box sx={{ flexGrow: 1 }} />
+            <Box
+              aria-label="Primary navigation"
+              component="nav"
+              sx={{ display: { xs: 'flex', md: 'none' }, gap: 0.5 }}
+            >
+              {navigation.map((item) => (
+                <Button
+                  aria-current={item.selected ? 'page' : undefined}
+                  color="inherit"
+                  component={RouterLink}
+                  key={item.to}
+                  sx={{
+                    bgcolor: item.selected
+                      ? 'rgba(255,255,255,0.14)'
+                      : 'transparent',
+                    px: { xs: 1, sm: 1.5 },
+                  }}
+                  to={item.to}
+                >
+                  {item.label}
+                </Button>
+              ))}
+            </Box>
           </Toolbar>
         </AppBar>
 
@@ -76,17 +122,21 @@ export function App() {
               Workspace
             </Typography>
             <List disablePadding sx={{ mt: 1 }}>
-              <ListItemButton
-                component={RouterLink}
-                selected
-                sx={{ borderRadius: 1.5 }}
-                to="/employees"
-              >
-                <ListItemText
-                  primary="Employees"
-                  slotProps={{ primary: { sx: { fontWeight: 700 } } }}
-                />
-              </ListItemButton>
+              {navigation.map((item) => (
+                <ListItemButton
+                  aria-current={item.selected ? 'page' : undefined}
+                  component={RouterLink}
+                  key={item.to}
+                  selected={item.selected}
+                  sx={{ borderRadius: 1.5, mb: 0.5 }}
+                  to={item.to}
+                >
+                  <ListItemText
+                    primary={item.label}
+                    slotProps={{ primary: { sx: { fontWeight: 700 } } }}
+                  />
+                </ListItemButton>
+              ))}
             </List>
           </Box>
 
@@ -100,7 +150,8 @@ export function App() {
             }}
           >
             <Routes>
-              <Route path="/" element={<Navigate replace to="/employees" />} />
+              <Route path="/" element={<Navigate replace to="/dashboard" />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/employees" element={<EmployeeDirectory />} />
               <Route
                 path="/employees/:employeeId"

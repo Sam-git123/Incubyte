@@ -3,12 +3,13 @@ import type {
   CountryAnalyticsResponse,
   DepartmentAnalyticsResponse,
 } from '@acme/contracts';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { createTestQueryClient } from '../../../test/query-client';
 import {
   getCompensationSummary,
   getCountryAnalytics,
@@ -179,6 +180,41 @@ describe('DashboardPage', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('distinguishes a filtered empty result and lets the user clear filters', async () => {
+    arrangeSuccessfulRequests();
+    mockedGetCompensationSummary.mockImplementation(async (filters) =>
+      filters.country
+        ? {
+            headcount: 0,
+            employeesWithSalary: 0,
+            employeesWithoutSalary: 0,
+            compensationByCurrency: [],
+          }
+        : summaryResponse(),
+    );
+    const user = userEvent.setup();
+    renderDashboard();
+    await screen.findByText('10 employees');
+
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'Country' }),
+      'AE',
+    );
+
+    expect(
+      await screen.findByText('No employees match these filters.'),
+    ).toBeInTheDocument();
+    const emptyState = screen.getByText(
+      'No employees match these filters.',
+    ).parentElement;
+    expect(emptyState).not.toBeNull();
+    await user.click(
+      within(emptyState!).getByRole('button', { name: 'Clear filters' }),
+    );
+    expect(await screen.findByText('10 employees')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Country' })).toHaveValue('');
+  });
+
   it('renders accessible department headcount data without mixed-currency salary comparisons', async () => {
     arrangeSuccessfulRequests();
 
@@ -217,11 +253,7 @@ describe('DashboardPage', () => {
 });
 
 function renderDashboard() {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false, gcTime: Infinity },
-    },
-  });
+  const queryClient = createTestQueryClient();
 
   return render(
     <QueryClientProvider client={queryClient}>

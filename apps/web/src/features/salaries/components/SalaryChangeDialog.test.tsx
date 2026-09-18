@@ -1,8 +1,9 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { createTestQueryClient } from '../../../test/query-client';
 import { SalaryChangeDialog } from './SalaryChangeDialog';
 
 describe('SalaryChangeDialog', () => {
@@ -18,7 +19,10 @@ describe('SalaryChangeDialog', () => {
       screen.getByRole('dialog', { name: 'Change salary' }),
     ).toBeInTheDocument();
     expect(screen.getByText('AED 280,000.00')).toBeInTheDocument();
+    expect(screen.getByLabelText('New annual salary')).toBeInTheDocument();
+    expect(screen.getByLabelText('Effective date')).toBeInTheDocument();
     expect(screen.getByLabelText('Currency')).toHaveValue('AED');
+    expect(screen.getByLabelText('Currency')).toHaveAttribute('readonly');
   });
 
   it('rejects an empty salary', async () => {
@@ -60,7 +64,7 @@ describe('SalaryChangeDialog', () => {
     ).toBeInTheDocument();
   });
 
-  it('submits integer minor units, refreshes salary queries, and reports success', async () => {
+  it('submits integer minor units and reports success', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
@@ -78,8 +82,7 @@ describe('SalaryChangeDialog', () => {
     );
     vi.stubGlobal('fetch', fetchMock);
     const onSaved = vi.fn();
-    const { queryClient } = renderDialog({ onSaved });
-    const invalidateQueries = vi.spyOn(queryClient, 'invalidateQueries');
+    renderDialog({ onSaved });
 
     await user.type(screen.getByLabelText('New annual salary'), '300000.50');
     await user.type(screen.getByLabelText('Effective date'), '2026-10-01');
@@ -97,12 +100,6 @@ describe('SalaryChangeDialog', () => {
         }),
       }),
     );
-    expect(invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ['employee', 'employee-500'],
-    });
-    expect(invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ['employees'],
-    });
   });
 
   it('shows a useful duplicate effective-date error', async () => {
@@ -133,6 +130,32 @@ describe('SalaryChangeDialog', () => {
         'A salary already exists for this effective date.',
       ),
     ).toBeInTheDocument();
+    expect(screen.getByLabelText('New annual salary')).toHaveValue('300000');
+    expect(screen.getByRole('button', { name: 'Save change' })).toBeEnabled();
+  });
+
+  it('shows a safe retryable message after an unexpected API failure', async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response('Internal server error', { status: 500 }),
+        ),
+    );
+    renderDialog();
+
+    await user.type(screen.getByLabelText('New annual salary'), '300000');
+    await user.type(screen.getByLabelText('Effective date'), '2026-10-01');
+    await user.click(screen.getByRole('button', { name: 'Save change' }));
+
+    expect(
+      await screen.findByText(
+        "We couldn't save the salary change. Please try again.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save change' })).toBeEnabled();
   });
 
   it('disables saving while the request is pending', async () => {
@@ -152,15 +175,9 @@ describe('SalaryChangeDialog', () => {
 });
 
 function renderDialog({ onSaved = vi.fn() } = {}) {
-  const trigger = document.createElement('button');
-  document.body.append(trigger);
-  trigger.focus();
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      mutations: { retry: false },
-      queries: { retry: false, gcTime: Infinity },
-    },
-  });
+  const trigger = render(<button type="button">Open salary dialog</button>);
+  trigger.getByRole('button', { name: 'Open salary dialog' }).focus();
+  const queryClient = createTestQueryClient();
 
   const result = render(
     <QueryClientProvider client={queryClient}>
@@ -179,5 +196,5 @@ function renderDialog({ onSaved = vi.fn() } = {}) {
     </QueryClientProvider>,
   );
 
-  return { ...result, queryClient };
+  return result;
 }

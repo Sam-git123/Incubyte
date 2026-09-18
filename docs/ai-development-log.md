@@ -272,3 +272,24 @@ A proposed global salary headline was rejected because the unfiltered organizati
 - RED: the focused dashboard suite failed on missing analytics frontend modules, and the application-shell test failed while `/` still opened Employees.
 - GREEN: focused tests cover summary counts, separate currency groups, endpoint-specific filters, clearing, loading, failure, empty results, department data, country currency labels, and dashboard-first routing.
 - The full workspace test, typecheck, lint, and build gates and seeded browser/API checks were completed after refactoring.
+
+## 2026-09-18 — Phase 12 critical frontend test coverage
+
+### Task
+
+Strengthen regression coverage for the employee directory, employee details, salary-change workflow, and compensation dashboard without adding product behavior, backend work, end-to-end infrastructure, or CI changes.
+
+### AI contribution
+
+The AI agent audited every existing frontend test before editing, identified behavior gaps and brittle assertions, and added focused React Testing Library coverage for deterministic debounce timing, combined filters, pagination and sorting controls, absent salary display, visible post-mutation refresh, safe mutation failures, salary formatting, and filtered dashboard empty states. It also extracted one small helper that creates an isolated QueryClient for each render.
+
+### Engineering review
+
+Tests continue to mock API boundaries while exercising the real router, TanStack Query, Material UI, and form behavior. Query-cache spy assertions and an unmanaged focus element were removed in favor of visible UI outcomes and cleanup-safe rendering. Fake timers are limited to debounce and salary-time semantics, and fixed system time keeps scheduled/current salary labels deterministic. No generic test framework, MSW layer, snapshot suite, or production feature change was introduced.
+
+### Verification
+
+- The focused frontend suite passes 57 tests across 9 files.
+- Salary mutation coverage verifies that successful invalidation produces refreshed current salary and history in the rendered page.
+- The full workspace test, typecheck, lint, and build gates were run after the test refactor and documentation update.
+- Coverage percentages were not reported because code-coverage instrumentation is not configured in the workspace.

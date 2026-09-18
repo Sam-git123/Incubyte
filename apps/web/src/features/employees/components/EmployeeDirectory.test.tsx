@@ -1,10 +1,18 @@
 import type { EmployeeListResponse } from '@acme/contracts';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { createTestQueryClient } from '../../../test/query-client';
 import { getEmployees } from '../api/employees-api';
 import { EmployeeDirectory } from './EmployeeDirectory';
 
@@ -26,6 +34,9 @@ describe('EmployeeDirectory', () => {
     renderDirectory();
 
     expect(await screen.findByText('Ava Patel')).toBeInTheDocument();
+    expect(
+      screen.getByRole('gridcell', { name: 'EMP000001' }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('gridcell', { name: 'Engineering' }),
     ).toBeInTheDocument();
@@ -91,22 +102,65 @@ describe('EmployeeDirectory', () => {
     ).toBeInTheDocument();
   });
 
-  it('debounces search and maps it to the employee request', async () => {
+  it('debounces search deterministically and maps trimmed input to the request', async () => {
     mockedGetEmployees.mockResolvedValue(employeeResponse());
     renderDirectory();
     await screen.findByText('Ava Patel');
-    const user = userEvent.setup();
+    vi.useFakeTimers();
 
-    await user.type(
+    fireEvent.change(
       screen.getByRole('searchbox', { name: 'Search employees' }),
-      '  Ava  ',
+      { target: { value: '  Ava  ' } },
     );
 
     expect(mockedGetEmployees).toHaveBeenCalledTimes(1);
 
+    act(() => vi.advanceTimersByTime(299));
+    expect(mockedGetEmployees).toHaveBeenCalledTimes(1);
+
+    act(() => vi.advanceTimersByTime(1));
+    await Promise.resolve();
+    expect(mockedGetEmployees).toHaveBeenLastCalledWith(
+      expect.objectContaining({ page: 1, search: 'Ava' }),
+    );
+  });
+
+  it('combines search and filters and resets an existing page selection', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    mockedGetEmployees.mockResolvedValue(employeeResponse());
+    renderDirectory();
+    await screen.findByText('Ava Patel');
+
+    await user.click(screen.getByRole('button', { name: /next page/i }));
     await waitFor(() =>
       expect(mockedGetEmployees).toHaveBeenLastCalledWith(
-        expect.objectContaining({ page: 1, search: 'Ava' }),
+        expect.objectContaining({ page: 2 }),
+      ),
+    );
+
+    await user.type(
+      screen.getByRole('searchbox', { name: 'Search employees' }),
+      'Ava',
+    );
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'Country' }),
+      'AE',
+    );
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'Department' }),
+      'Engineering',
+    );
+    await act(() => vi.advanceTimersByTimeAsync(300));
+
+    await waitFor(() =>
+      expect(mockedGetEmployees).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          page: 1,
+          search: 'Ava',
+          country: 'AE',
+          department: 'Engineering',
+        }),
       ),
     );
   });
@@ -172,6 +226,62 @@ describe('EmployeeDirectory', () => {
     );
   });
 
+  it('maps page-size and employee-name sorting controls to server queries', async () => {
+    const user = userEvent.setup();
+    mockedGetEmployees.mockResolvedValue(employeeResponse());
+    renderDirectory();
+    await screen.findByText('Ava Patel');
+
+    const pageSizeControls = screen.getByText('Rows per page:').parentElement;
+    expect(pageSizeControls).not.toBeNull();
+    await user.click(
+      within(pageSizeControls!).getByRole('combobox', { hidden: true }),
+    );
+    await user.click(await screen.findByRole('option', { name: '50' }));
+    await waitFor(() =>
+      expect(mockedGetEmployees).toHaveBeenLastCalledWith(
+        expect.objectContaining({ page: 1, pageSize: 50 }),
+      ),
+    );
+
+    const employeeHeader = screen.getByRole('columnheader', {
+      name: /^employee$/i,
+    });
+    await user.click(employeeHeader);
+    await waitFor(() =>
+      expect(mockedGetEmployees).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          page: 1,
+          pageSize: 50,
+          sortBy: 'firstName',
+          sortOrder: 'asc',
+        }),
+      ),
+    );
+
+    await user.click(employeeHeader);
+    await waitFor(() =>
+      expect(mockedGetEmployees).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          sortBy: 'firstName',
+          sortOrder: 'desc',
+        }),
+      ),
+    );
+  });
+
+  it('uses the established empty salary label when current salary is absent', async () => {
+    const response = employeeResponse();
+    response.data[0]!.currentSalary = null;
+    mockedGetEmployees.mockResolvedValue(response);
+
+    renderDirectory();
+
+    expect(
+      await screen.findByRole('gridcell', { name: 'Not set' }),
+    ).toBeInTheDocument();
+  });
+
   it('opens the selected employee details route from the employee name', async () => {
     const user = userEvent.setup();
     mockedGetEmployees.mockResolvedValue(employeeResponse());
@@ -186,14 +296,7 @@ describe('EmployeeDirectory', () => {
 });
 
 function renderDirectory(withDetailsRoute = false) {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-        gcTime: Infinity,
-      },
-    },
-  });
+  const queryClient = createTestQueryClient();
 
   return render(
     <QueryClientProvider client={queryClient}>

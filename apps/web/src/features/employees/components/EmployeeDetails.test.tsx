@@ -1,10 +1,11 @@
 import type { EmployeeDetailsResponse } from '@acme/contracts';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createTestQueryClient } from '../../../test/query-client';
 import { EmployeeApiError, getEmployee } from '../api/employee-details-api';
 import { EmployeeDetails } from './EmployeeDetails';
 
@@ -25,6 +26,7 @@ describe('EmployeeDetails', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllGlobals();
     vi.clearAllMocks();
   });
 
@@ -94,6 +96,61 @@ describe('EmployeeDetails', () => {
     await user.click(screen.getByRole('button', { name: 'Save change' }));
 
     expect(await screen.findByText('Salary change saved.')).toBeInTheDocument();
+  });
+
+  it('refreshes visible current salary and history after a successful change', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const updatedEmployee = employeeDetailsResponse();
+    updatedEmployee.currentSalary = {
+      amountMinor: 31_000_000,
+      currency: 'AED',
+      effectiveFrom: '2026-05-01T00:00:00.000Z',
+    };
+    updatedEmployee.salaryHistory = [
+      {
+        id: 'salary-new',
+        amountMinor: 31_000_000,
+        currency: 'AED',
+        effectiveFrom: '2026-05-01T00:00:00.000Z',
+      },
+      ...updatedEmployee.salaryHistory,
+    ];
+    mockedGetEmployee
+      .mockResolvedValueOnce(employeeDetailsResponse())
+      .mockResolvedValue(updatedEmployee);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            salary: {
+              id: 'salary-new',
+              amountMinor: 31_000_000,
+              currency: 'AED',
+              effectiveFrom: '2026-05-01T00:00:00.000Z',
+              createdAt: '2026-06-01T12:00:00.000Z',
+            },
+          }),
+          { status: 201, headers: { 'Content-Type': 'application/json' } },
+        ),
+      ),
+    );
+    renderDetails();
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Change salary' }),
+    );
+    await user.type(screen.getByLabelText('New annual salary'), '310000');
+    await user.type(screen.getByLabelText('Effective date'), '2026-05-01');
+    await user.click(screen.getByRole('button', { name: 'Save change' }));
+
+    expect(await screen.findByText('Salary change saved.')).toBeInTheDocument();
+    await waitFor(() => expect(mockedGetEmployee).toHaveBeenCalledTimes(2));
+    expect(screen.getAllByText('AED 310,000.00').length).toBeGreaterThan(0);
+    const table = screen.getByRole('table', { name: 'Salary history' });
+    const newSalaryRow = within(table).getByText('May 1, 2026').closest('tr');
+    expect(newSalaryRow).not.toBeNull();
+    expect(within(newSalaryRow!).getByText('Current')).toBeInTheDocument();
   });
 
   it('renders salary history newest first and labels future records', async () => {
@@ -201,9 +258,7 @@ describe('EmployeeDetails', () => {
 });
 
 function renderDetails(initialEntry = '/employees/employee-500') {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false, gcTime: Infinity } },
-  });
+  const queryClient = createTestQueryClient();
 
   return render(
     <QueryClientProvider client={queryClient}>

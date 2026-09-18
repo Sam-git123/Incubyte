@@ -12,6 +12,10 @@ vi.mock('./features/employees/components/EmployeeDetails', () => ({
   EmployeeDetails: () => <div>Employee details</div>,
 }));
 
+vi.mock('./features/analytics/pages/DashboardPage', () => ({
+  DashboardPage: () => <div>Compensation dashboard</div>,
+}));
+
 describe('App', () => {
   it('renders the application heading', () => {
     render(
@@ -23,6 +27,12 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'ACME Salary Management' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('Employee directory')).toBeInTheDocument();
+    expect(screen.getByText('Compensation dashboard')).toBeInTheDocument();
+    expect(
+      screen.getAllByRole('link', { name: 'Dashboard' }).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByRole('link', { name: 'Employees' }).length,
+    ).toBeGreaterThan(0);
   });
 });

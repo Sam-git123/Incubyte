@@ -1,6 +1,6 @@
 # Proposed Architecture
 
-> Status: Phase 11 compensation dashboard implemented. The React application now presents currency-safe summary, department, and country insights over the Phase 10 analytics APIs alongside the employee and salary workflows.
+> Status: Phase 16 production deployment foundation prepared. The modular monolith can run as one compiled Render web service with a persistent SQLite disk; provisioning the public service still requires an authorized repository push and Render account action.
 
 ## Overview
 
@@ -73,4 +73,8 @@ The implemented API surface includes `GET /api/employees`, `GET /api/employees/:
 
 ## Deployment direction
 
-Development and assessment review initially target a single web application, API process, and SQLite database. Deployment has not been chosen. If the eventual host cannot provide durable SQLite storage, or real concurrency and operational requirements outgrow it, the Prisma-backed persistence layer can be migrated deliberately to PostgreSQL. That is a future decision based on evidence, not part of Phase 0.
+Production targets one Render Node web service. The compiled Fastify process serves REST endpoints under `/api`, the health check at `/health`, and the compiled React assets with SPA fallback. Same-origin browser requests preserve the existing `/api` client default and avoid a separate CORS policy. Fingerprinted assets receive immutable caching while the SPA entry point remains non-cacheable.
+
+Render mounts a 1 GB persistent disk at `/var/data`, and Prisma uses `file:/var/data/acme.db`. The start command applies committed migrations before accepting traffic. The deterministic but destructive assessment seed is restricted to Render's one-time initial deploy hook; routine deploys and restarts neither reset nor reseed data.
+
+The API validates `DATABASE_URL`, `NODE_ENV`, and `PORT` before listening on `0.0.0.0`, logs through Fastify, exposes no stack traces in its public error envelope, applies baseline security headers, and closes Fastify and Prisma on SIGINT or SIGTERM. Render disk constraints intentionally limit this SQLite topology to one service instance and rule out zero-downtime multi-instance deployment. PostgreSQL remains the migration path if concurrency, availability, backup, or horizontal-scaling requirements grow.

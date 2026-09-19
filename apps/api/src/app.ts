@@ -1,4 +1,6 @@
 import Fastify, { type FastifyServerOptions } from 'fastify';
+import fastifyHelmet from '@fastify/helmet';
+import fastifyStatic from '@fastify/static';
 
 import { getPrismaClient } from './db/prisma.js';
 import type { PrismaClient } from './generated/prisma/client.js';
@@ -15,6 +17,7 @@ import { SalaryService } from './modules/salaries/salary.service.js';
 type AppDependencies = {
   prisma?: PrismaClient;
   now?: () => Date;
+  webRoot?: string;
 };
 
 export function buildApp(
@@ -26,6 +29,8 @@ export function buildApp(
   let employeeService: EmployeeService | undefined;
   let salaryService: SalaryService | undefined;
   let analyticsService: AnalyticsService | undefined;
+
+  app.register(fastifyHelmet);
 
   const getEmployeeService = () => {
     employeeService ??= new EmployeeService(
@@ -55,6 +60,38 @@ export function buildApp(
   app.register(employeeRoutes, { getEmployeeService, now });
   app.register(salaryRoutes, { getSalaryService });
   app.register(analyticsRoutes, { getAnalyticsService, now });
+
+  if (dependencies.webRoot) {
+    app.register(fastifyStatic, {
+      root: dependencies.webRoot,
+      wildcard: false,
+      cacheControl: false,
+      setHeaders(response, filePath) {
+        response.setHeader(
+          'Cache-Control',
+          /[\\/]assets[\\/]/.test(filePath)
+            ? 'public, max-age=31536000, immutable'
+            : 'no-cache',
+        );
+      },
+    });
+
+    app.setNotFoundHandler((request, reply) => {
+      if (request.url === '/api' || request.url.startsWith('/api/')) {
+        return reply.status(404).send({
+          error: {
+            code: 'NOT_FOUND',
+            message: 'Resource not found.',
+          },
+        });
+      }
+
+      return reply
+        .header('Cache-Control', 'no-cache')
+        .type('text/html')
+        .sendFile('index.html');
+    });
+  }
 
   app.setErrorHandler((error, request, reply) => {
     request.log.error(error);

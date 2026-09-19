@@ -20,6 +20,10 @@ SQLite makes local setup and assessment review reproducible with little infrastr
 
 The initial implementation pins Prisma 6.19 and uses its local-file libSQL adapter. This avoids a current Prisma 7 migration-engine regression and avoids a native SQLite compilation requirement on Node 24. The pin and adapter are implementation choices, not domain commitments, and should be revisited when the upstream tooling is stable for the supported development environments.
 
+Phase 16 retains SQLite for the public assessment deployment by choosing a paid Render service with a persistent disk. This is the lowest-change path for the measured 10,000-employee workload and keeps local, test, and production persistence aligned. The cost is a single-instance topology: a disk cannot be shared across instances, and disk-backed deploys cannot provide zero-downtime replacement. PostgreSQL was considered and remains preferable once horizontal scaling, stronger managed backups, or higher write concurrency is required, but a provider migration was not justified solely to publish this assessment.
+
+The production start command runs idempotent committed migrations on every start. Seeding is separate and limited to the provider's initial-deploy hook because the existing deterministic seed intentionally replaces application data. This makes first provisioning automatic without risking data loss during normal restarts; rerunning that hook manually is an explicit destructive operation.
+
 ## MUI DataGrid as the initial directory table
 
 MUI DataGrid Community aligns with the Material UI stack and supplies accessible grid behavior, sorting, and server-mode pagination with less bespoke UI work. Phase 7 confirmed that the community edition covers the directory's current requirements. Licensing or customization limits should still trigger reconsideration before adopting paid-only behavior; TanStack Table remains the likely alternative when headless customization matters more than integrated components.

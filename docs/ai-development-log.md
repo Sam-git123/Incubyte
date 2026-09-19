@@ -357,3 +357,23 @@ The cache review found one concrete correctness issue: a successful salary chang
 - Query logging confirmed fixed query counts rather than per-employee salary queries; selected `EXPLAIN QUERY PLAN` output confirmed existing index use and the expected search/sort scans.
 - Manual browser checks covered directory paging, debounced search, employee details, dashboard loading, and filter refresh.
 - The focused cache-invalidation test and the complete test, typecheck, lint, build, and Playwright gates passed.
+
+## 2026-09-19 — Phase 16 deployment and production readiness
+
+### Task
+
+Prepare the implemented modular monolith for a public deployment with durable data, safe migrations, production SPA delivery, runtime validation, and operational documentation without adding product behavior.
+
+### AI contribution
+
+The AI agent compared deployment shapes, reviewed provider constraints, wrote failing production-serving tests, and added the minimal same-origin Fastify/React runtime, Render Blueprint, configuration validation, security headers, graceful shutdown, and deployment guidance. It also separated repeatable migrations from one-time destructive seeding and exercised the production build locally.
+
+### Engineering review
+
+A single Render service with a persistent SQLite disk was accepted as the smallest architecture consistent with the measured workload and current Prisma schema. A split frontend/backend deployment and permissive CORS were rejected because same-origin hosting is simpler. PostgreSQL and Docker were deferred because neither was required for correctness here. The limitations of paid persistent storage, single-instance SQLite, and provider-managed provisioning are documented rather than hidden.
+
+### Verification
+
+- RED: production tests initially failed because security headers, static assets, SPA fallback, and predictable unknown-API responses were absent.
+- GREEN: focused tests cover runtime configuration, security headers, cache behavior, SPA fallback, and the JSON 404 contract.
+- Frozen installation, Prisma generation, full lint, typecheck, unit/integration tests, production build, local production smoke checks, and Playwright E2E were run after the deployment changes.

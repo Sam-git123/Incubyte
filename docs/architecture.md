@@ -1,10 +1,10 @@
-# Proposed Architecture
+# Implemented Architecture
 
-> Status: Phase 16 production deployment foundation prepared. The modular monolith can run as one compiled Render web service with a persistent SQLite disk; provisioning the public service still requires an authorized repository push and Render account action.
+> Status: Phase 17 local submission review complete. The modular monolith can run as one compiled Render web service with a persistent SQLite disk; the public service has not yet been provisioned.
 
 ## Overview
 
-The proposed system is a TypeScript modular monolith: a React single-page application communicates over REST/JSON with a Node.js Fastify API backed by SQLite through Prisma. This keeps deployment and local development simple for an assessment-scale workload while retaining clear feature boundaries.
+The system is a TypeScript modular monolith: a React single-page application communicates over REST/JSON with a Node.js Fastify API backed by SQLite through Prisma. This keeps deployment and local development simple for an assessment-scale workload while retaining clear feature boundaries.
 
 ```mermaid
 flowchart LR
@@ -17,7 +17,7 @@ flowchart LR
 
 The browser will request only the employee page or analytics result it needs. Filtering, sorting, pagination, and aggregation belong on the server and database path rather than in the browser.
 
-## Proposed application structure
+## Application structure
 
 - `apps/web`: React, Vite, TypeScript, React Router, Material UI, MUI DataGrid, TanStack Query, React Hook Form, and Zod. Employee features own list/detail retrieval, the salary feature owns mutation and exact major/minor conversion, and the analytics feature owns dashboard requests and presentation without recalculating server metrics.
 - `apps/api`: Fastify and TypeScript, with employee, salary, and analytics modules separated by feature. Analytics routes validate filters, the service computes population/group metrics, and the repository retrieves only employee dimensions plus one currently effective salary per employee.
@@ -60,9 +60,9 @@ Job titles come from department-specific weighted families. Synthetic annual sal
 
 The implemented API surface includes `GET /api/employees`, `GET /api/employees/:employeeId`, `POST /api/employees/:employeeId/salaries`, `GET /api/analytics/summary`, `GET /api/analytics/departments`, `GET /api/analytics/countries`, and the bootstrap health route. The browser exposes `/dashboard`, `/employees`, and `/employees/:employeeId`, with `/` redirecting to the dashboard.
 
-## Quality and operational boundaries
+## Testing and operational boundaries
 
-- Business behaviour follows red-green-refactor TDD, with Fastify integration tests and focused React Testing Library tests. Phase 11 adds manual seeded-data and responsive browser checks; automated end-to-end coverage remains future work.
+- Business behaviour follows red-green-refactor TDD. Vitest covers domain behavior and migrated-database Fastify integration tests; React Testing Library covers visible frontend behavior; three serial Playwright scenarios exercise dashboard filtering, employee search/details, and salary-change persistence end to end.
 - Employee listing uses bounded server-side offset pagination. Its allowlist supports employee code, first name, last name, department, and country, defaulting to `employeeCode ASC`; non-unique fields use `employeeCode ASC` as a stable secondary order.
 - Salary sorting is deliberately rejected: correct ordering would require a specialized query over each employee's current effective record, and raw minor-unit comparisons across currencies would be misleading.
 - Existing unique employee-code and country/department indexes support exact directory queries. No name index was added because the current contains search is not expected to benefit from a normal B-tree index.
@@ -71,7 +71,7 @@ The implemented API surface includes `GET /api/employees`, `GET /api/employees/:
 - The API validates independently of the UI, avoids sensitive-value logging, and exposes consistent errors for invalid salaries, unsupported currencies, missing employees, and effective-date conflicts.
 - The modular boundaries leave a natural place to add authentication later, but production-grade identity, audit, encryption, and privacy controls are explicitly not implemented yet.
 
-## Deployment direction
+## Deployment
 
 Production targets one Render Node web service. The compiled Fastify process serves REST endpoints under `/api`, the health check at `/health`, and the compiled React assets with SPA fallback. Same-origin browser requests preserve the existing `/api` client default and avoid a separate CORS policy. Fingerprinted assets receive immutable caching while the SPA entry point remains non-cacheable.
 

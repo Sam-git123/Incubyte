@@ -11,7 +11,7 @@ Success means the HR Manager can complete those tasks efficiently with trustwort
 ### Employee directory and details
 
 - Present employees in a structured table with employee ID, name, email, department, job title, country, current salary, and currency.
-- Support server-side pagination, search by name or employee ID, filtering by country and department, and sorting by useful fields such as name and salary.
+- Support server-side pagination, search by name or employee ID, filtering by country and department, and stable sorting by supported directory fields such as employee ID, name, department, and country.
 - Provide loading, empty, and error states; changing filters should reset pagination when appropriate.
 - Allow an HR Manager to open an employee and see their profile, current salary, currency, effective date, and available salary history.
 
@@ -33,7 +33,7 @@ Success means the HR Manager can complete those tasks efficiently with trustwort
 - Support exactly 10,000 deterministic seeded employees with believable countries, departments, roles, currencies, and salary bands.
 - Validate all API input on the server, constrain pagination and sorting, avoid exposing stack traces, and avoid unnecessary salary logging.
 - Use meaningful automated behavioural tests for salary rules, APIs, analytics, and critical UI workflows; keep tests deterministic and independent of external services.
-- Make obvious scalable choices for this workload: bounded server-side pages, database-level filtering and aggregation, and debounced search.
+- Make obvious scalable choices for this workload: bounded server-side pages, database-level filtering and projection, bounded application aggregation, and debounced search.
 - Provide accessible labels, keyboard-operable controls, semantic tables, visible validation, appropriate focus handling, and reasonable contrast.
 
 ## Assumptions
@@ -41,7 +41,7 @@ Success means the HR Manager can complete those tasks efficiently with trustwort
 - The first version serves one trusted HR Manager persona; identity and permissions are deferred, not considered unnecessary for production.
 - Employee salary records use a single currency each, and currency is explicit on every salary record.
 - Salary amounts fit safely in the chosen integer representation; supported currencies and minor-unit rules will be defined during domain design.
-- An effective-dated salary record becomes current according to a rule to be specified and tested before implementation, including treatment of future-dated changes and ties.
+- The initially open effective-date rule was resolved during implementation: current salary is the latest record effective at or before the request time; future records remain scheduled and duplicate employee/effective-date pairs are rejected.
 - The assessment workload is modest enough for a single application instance and relational database during development and review.
 - Seed data is synthetic and is not intended to model real-world compensation perfectly.
 
@@ -52,6 +52,7 @@ Success means the HR Manager can complete those tasks efficiently with trustwort
 - Recruitment, onboarding, leave, attendance, performance reviews, employee documents, and notifications.
 - Spreadsheet import unless explicitly prioritized after the primary requirements are complete.
 - Live foreign-exchange integration or invented cross-currency totals.
+- Salary sorting without an explicit cross-currency comparison policy and a correct database-level current-salary query.
 - Microservices, event sourcing, CQRS, queues, Redis, Kubernetes, GraphQL, and other infrastructure without a demonstrated need.
 
 Production use would additionally require strong authentication and authorization, encryption, privacy controls, audit logging, retention policies, and operational safeguards. Those needs should influence boundaries but are not Phase 0 implementation scope.

@@ -266,6 +266,7 @@ export const apiErrorResponseSchema = z
           'INVALID_SALARY',
           'UNSUPPORTED_CURRENCY',
           'SALARY_EFFECTIVE_DATE_CONFLICT',
+          'NOT_FOUND',
           'INTERNAL_ERROR',
         ]),
         message: z.string(),

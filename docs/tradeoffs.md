@@ -1,4 +1,4 @@
-# Initial Engineering Trade-offs
+# Engineering Trade-offs
 
 These are working decisions for the assessment, not irreversible commitments. Each should be revisited when implementation evidence or deployment constraints contradicts its assumptions.
 

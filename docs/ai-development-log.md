@@ -377,3 +377,23 @@ A single Render service with a persistent SQLite disk was accepted as the smalle
 - RED: production tests initially failed because security headers, static assets, SPA fallback, and predictable unknown-API responses were absent.
 - GREEN: focused tests cover runtime configuration, security headers, cache behavior, SPA fallback, and the JSON 404 contract.
 - Frozen installation, Prisma generation, full lint, typecheck, unit/integration tests, production build, local production smoke checks, and Playwright E2E were run after the deployment changes.
+
+## 2026-09-19 — Phase 17 final assessment review
+
+### Task
+
+Review the completed repository from a first-time assessor's perspective, align documentation with the implemented product, and verify a clean setup, seeded data, core browser journey, and final quality gates without adding features.
+
+### AI contribution
+
+The AI agent audited documentation, routes, manifests, tracked artifacts, placeholders, Git history, and the reviewer setup path. It rewrote the README as a concise entry point, corrected stale requirement/architecture statements, aligned the unknown-route error with the shared contract, and prepared a short demo script.
+
+### Engineering review
+
+The original requirements framing and chronological AI log were preserved rather than rewritten into a perfect retrospective. Late suggestions to reorganize working modules, remove dependencies without evidence, add screenshots, split the existing bundle without deployed measurements, or introduce new documentation platforms were rejected. The absent public deployment and demo video remain explicit blockers rather than invented links.
+
+### Verification
+
+- An isolated copy with no dependencies, environment file, generated client, build output, or database passed the documented frozen install, Prisma generation, migrations, deterministic 10,000-employee seed, 191 tests, and production build.
+- A manual browser journey covered analytics filters, employee search/details, a future salary change, scheduled/current semantics, persisted history after refresh, and browser-console review.
+- The final worktree passed lint, typecheck, unit/integration tests, production build, Playwright E2E, seed-count verification, and tracked-artifact checks.

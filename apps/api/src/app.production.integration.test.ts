@@ -2,6 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import { apiErrorResponseSchema } from '@acme/contracts';
 import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -69,7 +70,7 @@ describe('production web serving', () => {
     });
 
     expect(response.statusCode).toBe(404);
-    expect(response.json()).toEqual({
+    expect(apiErrorResponseSchema.parse(response.json())).toEqual({
       error: {
         code: 'NOT_FOUND',
         message: 'Resource not found.',

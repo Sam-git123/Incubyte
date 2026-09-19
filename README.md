@@ -24,7 +24,12 @@ pnpm lint
 pnpm typecheck
 pnpm test
 pnpm build
+pnpm test:e2e
 ```
+
+## Continuous integration
+
+GitHub Actions runs the same lint, type-check, unit/integration, build, and E2E checks automatically for every push and pull request. The workflow uses the pinned pnpm version and isolated SQLite databases; it does not require repository secrets.
 
 ## End-to-end tests
 

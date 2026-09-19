@@ -313,3 +313,23 @@ The E2E database uses the existing schema, migrations, seed generator, and persi
 - The E2E suite was run successfully three consecutive times from a clean database reset.
 - The full unit/integration test, typecheck, lint, and build gates passed.
 - Browser installation and the single-command E2E workflow are documented in the README.
+
+## 2026-09-19 — Phase 14 continuous integration
+
+### Task
+
+Add GitHub Actions checks for installation, Prisma generation, linting, type checking, unit/integration tests, production builds, and Playwright E2E tests without adding deployment behavior.
+
+### AI contribution
+
+The AI agent reviewed clean-checkout requirements and current project scripts, verified the official action setup pattern, and created a two-job workflow. The quality job runs the standard local commands; the dependent E2E job installs Chromium and delegates database reset, migrations, seeding, and server startup to the existing `pnpm test:e2e` command.
+
+### Engineering review
+
+Node 20.19.0 matches the repository's minimum supported runtime, while pnpm is sourced from the pinned `packageManager` field and its store is cached through the standard Node setup action. Non-secret SQLite URLs are job-local. A job matrix, custom actions, duplicated server orchestration, coverage thresholds, security scanners, Docker, and deployment steps were rejected as unnecessary for this phase.
+
+### Verification
+
+- A frozen-lockfile install and explicit Prisma generation passed locally.
+- The workflow YAML was formatting-checked and reviewed against existing scripts and clean-checkout assumptions.
+- Lint, typecheck, unit/integration tests, production build, and the Chromium E2E suite passed locally.

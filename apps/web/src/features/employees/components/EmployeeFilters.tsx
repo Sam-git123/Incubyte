@@ -56,7 +56,9 @@ export function EmployeeFilters({
       />
 
       <FormControl fullWidth>
-        <InputLabel htmlFor="country-filter">Country</InputLabel>
+        <InputLabel htmlFor="country-filter" shrink>
+          Country
+        </InputLabel>
         <NativeSelect
           inputProps={{ 'aria-label': 'Country', id: 'country-filter' }}
           onChange={(event) => onCountryChange(event.target.value)}
@@ -72,7 +74,9 @@ export function EmployeeFilters({
       </FormControl>
 
       <FormControl fullWidth>
-        <InputLabel htmlFor="department-filter">Department</InputLabel>
+        <InputLabel htmlFor="department-filter" shrink>
+          Department
+        </InputLabel>
         <NativeSelect
           inputProps={{ 'aria-label': 'Department', id: 'department-filter' }}
           onChange={(event) => onDepartmentChange(event.target.value)}

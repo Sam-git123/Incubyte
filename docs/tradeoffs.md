@@ -64,9 +64,13 @@ Ten thousand records could sometimes fit in browser memory, but transferring and
 
 The listing endpoint uses simple `page`/`pageSize` offset pagination, capped at 100 rows. It defaults to `employeeCode ASC` and allow-lists employee code, first name, last name, department, and country; non-unique fields add employee code as a stable secondary order. This produces understandable metadata and predictable page boundaries for the assessment. Cursor pagination should be reconsidered if deep-page performance or frequent concurrent inserts become material.
 
+Phase 15 measurements retained offset pagination: page 100 was no slower than the first page in the local 10,000-row dataset. Cursor pagination would complicate navigation and total-page metadata without solving an observed problem.
+
 ## Database-backed contains search instead of search infrastructure
 
 At the expected 10,000-employee scale, SQLite `contains` predicates over first name, last name, and employee code are a clear baseline. Whitespace-delimited terms are ANDed so full names work without a denormalized column or raw SQL concatenation. This relies on SQLite's case-insensitive ASCII `LIKE` behavior; broader Unicode collation or materially larger data could justify full-text search later. Normal first/last-name indexes were not added because leading-wildcard contains queries generally cannot use them effectively.
+
+Query-plan inspection confirmed that the leading-wildcard predicate scans rather than seeks a normal name index, while the measured employee-code search remained comfortable at roughly 12 ms median. Full-text search and additional name indexes remain unjustified.
 
 ## Defer salary sorting
 
@@ -81,6 +85,8 @@ Adding unlike currencies creates misleading results. Initial metrics will theref
 Phase 10 uses one focused Prisma employee query per analytics request. Database predicates apply country/department filters and each relation projection contains at most the latest salary effective at the request's controlled time. The result includes only country, department, amount, and currency—not employee profiles or salary history—so the application can calculate median and grouped metrics without N+1 queries.
 
 Median and grouping remain in small TypeScript helpers because SQLite has no simple portable median aggregate and 10,000 minimal rows performed comfortably in measured local requests. Targeted parameterized SQL was considered but rejected for now: it would add adapter-specific date/result handling without a demonstrated correctness or performance benefit. This should be revisited if measured volume or latency grows materially.
+
+Phase 15 repeated the unfiltered analytics measurements at roughly 134–138 ms median. SQLite, the minimal Prisma projection, and application-side median therefore remain appropriate for the stated workload; no raw SQL rewrite, materialization, or cache was introduced.
 
 Averages and even-sized medians are rounded to the nearest minor unit with `Math.round`; positive half-unit results round upward. Headcount is dimensionless and may span currencies, but every monetary metric remains inside a currency group. Country responses also retain `compensationByCurrency` rather than assuming one currency per country.
 

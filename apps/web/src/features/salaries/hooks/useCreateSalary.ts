@@ -15,6 +15,7 @@ export function useCreateSalary(employeeId: string) {
           queryKey: ['employee', employeeId],
         }),
         queryClient.invalidateQueries({ queryKey: ['employees'] }),
+        queryClient.invalidateQueries({ queryKey: ['analytics'] }),
       ]);
     },
   });

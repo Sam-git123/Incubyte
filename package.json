@@ -23,6 +23,7 @@
     "dev": "concurrently --kill-others-on-fail --names api,web --prefix-colors blue,magenta \"corepack pnpm --filter @acme/api dev\" \"corepack pnpm --filter @acme/web dev\"",
     "format": "prettier --write .",
     "lint": "eslint . && prettier --check .",
+    "perf:check": "node scripts/perf-check.mjs",
     "test": "corepack pnpm --recursive --if-present run test",
     "test:e2e": "corepack pnpm run test:e2e:prepare && playwright test",
     "test:e2e:prepare": "corepack pnpm --filter @acme/contracts build && cross-env DATABASE_URL=file:./e2e.db corepack pnpm --filter @acme/api db:reset && cross-env DATABASE_URL=file:./e2e.db tsx e2e/seed-database.ts",

@@ -333,3 +333,27 @@ Node 20.19.0 matches the repository's minimum supported runtime, while pnpm is s
 - A frozen-lockfile install and explicit Prisma generation passed locally.
 - The workflow YAML was formatting-checked and reviewed against existing scripts and clean-checkout assumptions.
 - Lint, typecheck, unit/integration tests, production build, and the Chromium E2E suite passed locally.
+
+## 2026-09-19 — Phase 15 performance review
+
+### Task
+
+Measure the application against its deterministic 10,000-employee workload, inspect query and browser behavior, and make only evidence-backed optimizations.
+
+### AI contribution
+
+The AI agent generated performance hypotheses, captured repeat local HTTP samples and payload sizes, logged Prisma query counts, inspected selected SQLite query plans and indexes, reviewed frontend server-mode behavior in a browser, and added a reusable side-effect-free benchmark script.
+
+### Engineering review
+
+The measured employee directory and analytics paths were accepted without database changes. Offset pagination, current relational search, existing country/department indexes, the salary composite index, and application-side median all remained comfortable at the stated scale. Proposed cursor pagination, full-text search, extra name/composite indexes, raw median SQL, caching infrastructure, and broad React memoization were rejected because the measurements did not justify them.
+
+The cache review found one concrete correctness issue: a successful salary change invalidated employee data but not analytics. A focused failing test demonstrated the stale analytics state, and the existing mutation hook was extended to invalidate the analytics query family.
+
+### Verification
+
+- The deterministic seed restored 10,000 employees and 14,064 salary records before measurement and after mutation timing.
+- `pnpm perf:check` verified one warm-up plus 10 successful samples for each representative employee and analytics GET request.
+- Query logging confirmed fixed query counts rather than per-employee salary queries; selected `EXPLAIN QUERY PLAN` output confirmed existing index use and the expected search/sort scans.
+- Manual browser checks covered directory paging, debounced search, employee details, dashboard loading, and filter refresh.
+- The focused cache-invalidation test and the complete test, typecheck, lint, build, and Playwright gates passed.

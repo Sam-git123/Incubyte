@@ -22,6 +22,7 @@ export default tseslint.config(
       'e2e/**/*.ts',
       'packages/**/*.ts',
       'playwright.config.ts',
+      'scripts/**/*.mjs',
     ],
     languageOptions: {
       globals: globals.node,
